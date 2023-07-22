@@ -188,8 +188,7 @@ function getChildren(el, className) {
                     }
                     this.querySelectorAll(".tool_timeline__item-circle").forEach(
                         (item, index) => {
-                            const color = item.getAttribute("color") || "#19be6b";
-                            item.style.borderColor = color;
+                            item.style.borderColor = item.getAttribute("color") || "#19be6b";
                         }
                     );
 
@@ -354,8 +353,8 @@ function getChildren(el, className) {
                 render() {
                     if (this.options.bvid)
                         this.innerHTML = `
-                            <iframe class="iframe-dom" allowfullscreen="true" class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width};height:${this.options.height}"></iframe>`;
-                    else this.innerHTML = "请填写正确的BVID";
+                            <iframe class="iframe-dom" allowfullscreen="true" scrolling="no" border="0" frameborder="no" framespacing="0" class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width};height:${this.options.height}"></iframe>`;
+                    else this.innerHTML = "请填写正确的bvid";
                 }
             }
         );
@@ -374,7 +373,7 @@ function getChildren(el, className) {
                     this.render();
                 }
                 render() {
-                    if (!this.options.src) return (this.innerHTML = "请填写正确的PDF链接");
+                    if (!this.options.src) return (this.innerHTML = "请填写正确的pdf链接");
                     this.innerHTML = `
                         <div class="tool_pdf">
                             <iframe class="iframe-dom" src="${this.options.src}" style="width:${this.options.width};height:${this.options.height}"></iframe>
