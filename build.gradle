@@ -1,0 +1,32 @@
+plugins {
+    id "run.halo.plugin.devtools" version "0.0.5"
+    id "io.freefair.lombok" version "8.0.1"
+    id 'java'
+}
+
+group 'run.halo.toolbench'
+sourceCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/releases' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://repo.spring.io/milestone' }
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('run.halo.tools.platform:plugin:2.6.0-SNAPSHOT')
+    implementation 'com.vladsch.flexmark:flexmark-all:0.64.8'
+    compileOnly 'run.halo.app:api'
+
+    testImplementation 'run.halo.app:api'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

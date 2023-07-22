@@ -1,0 +1,39 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: plugin-tool-bench-settings
+spec:
+  forms:
+    - group: basic
+      label: 通用设置
+      formSchema:
+        - $formkit: radio
+          name: antvG2
+          id: antvG2
+          label: AntV G2
+          value: false
+          options:
+            - value: true
+              label: 启用
+            - value: false
+              label: 禁用
+        - $formkit: radio
+          name: antvX6
+          id: antvX6
+          label: AntV X6
+          value: false
+          options:
+            - value: true
+              label: 启用
+            - value: false
+              label: 禁用
+        - $formkit: text
+          label: 目录页标题
+          name: directory
+          validation: required
+          value: "目录"
+        - $formkit: text
+          label: GitHub Token
+          name: githubToken
+          validation: required
+          value: "GitHub Token"

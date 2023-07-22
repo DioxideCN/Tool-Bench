@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: "Role"
+metadata:
+  name: tool-bench-graphql-use
+  labels:
+    halo.run/role-template: "true"
+    halo.run/hidden: "true"
+  annotations:
+    rbac.authorization.halo.run/dependencies: |
+      [ "role-template-own-permissions", "role-template-public-apis" ]
+rules:
+  - nonResourceURLs: [ "/apis/api.plugin.halo.run/v1alpha1/plugins/ToolBench/github/*" ]
+    verbs: [ "get" ]

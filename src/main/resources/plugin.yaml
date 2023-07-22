@@ -1,0 +1,19 @@
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
+metadata:
+  name: ToolBench
+spec:
+  enabled: true
+  version: 1.0.4
+  requires: ">=2.6.0"
+  author:
+    name: Dioxide.CN
+    website: https://github.com/Mordor171/Liquid-Formatter
+  logo: https://dioxide-cn.ink/upload/logo.png
+  settingName: plugin-tool-bench-settings
+  configMapName: plugin-tool-bench-configMap
+  homepage: https://github.com/Mordor171/Liquid-Formatter
+  displayName: "Tool Bench"
+  description: "为Halo博客集成更多标签样式与功能支持"
+  license:
+    - name: "MIT"
