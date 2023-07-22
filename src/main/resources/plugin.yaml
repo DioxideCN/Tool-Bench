@@ -4,16 +4,16 @@ metadata:
   name: ToolBench
 spec:
   enabled: true
-  version: 1.0.4
-  requires: ">=2.6.0"
+  version: 1.0.0
+  requires: ">=2.5.0"
   author:
     name: Dioxide.CN
-    website: https://github.com/Mordor171/Liquid-Formatter
-  logo: https://dioxide-cn.ink/upload/logo.png
+    website: https://dioxide-cn.ink/
+  logo: https://dioxide-cn.ink/upload/logo-bopd.png
   settingName: plugin-tool-bench-settings
   configMapName: plugin-tool-bench-configMap
-  homepage: https://github.com/Mordor171/Liquid-Formatter
-  displayName: "Tool Bench"
-  description: "为Halo博客集成更多标签样式与功能支持"
+  homepage: https://github.com/DioxideCN/Tool-Bench
+  displayName: "ToolBench"
+  description: "ToolBench是一款为Halo2.x博客集成更多标签样式与功能支持的插件"
   license:
     - name: "MIT"

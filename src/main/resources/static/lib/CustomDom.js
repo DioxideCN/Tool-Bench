@@ -264,19 +264,16 @@ function getChildren(el, className) {
                 constructor() {
                     super();
                     this.options = {
-                        type: /^success$|^info$|^warning$|^error$/.test(
-                            this.getAttribute("type")
-                        )
+                        type: /^success$|^info$|^warning$|^error$/.test(this.getAttribute("type"))
                             ? this.getAttribute("type")
                             : "info",
-                        content: this.getAttribute("content") || "消息内容",
                     };
                     this.innerHTML = `
-					<span class="tool_message ${this.options.type}">
-						<span class="tool_message__icon"></span>
-						<span class="tool_message__content">${this.options.content}</span>
-					</span>
-				`;
+                        <span class="tool_message ${this.options.type}">
+                            <span class="tool_message__icon"></span>
+                            <span class="tool_message__content">${this.innerHTML}</span>
+                        </span>
+                    `;
                 }
             }
         );
