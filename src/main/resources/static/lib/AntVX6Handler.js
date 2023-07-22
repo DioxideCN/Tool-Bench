@@ -10,7 +10,7 @@
             let matchContainer = regexContainer.exec(graphStr);
             if (matchContainer !== null) {
                 let occupied = document.querySelector(`#${matchContainer[1]}`).parentNode.offsetWidth;
-                const x6replacer = graphStr.replace(/\$\{(\(.+\)\(.+\)|occupied)}/g, function(match) {
+                const x6replacer = graphStr.replace(/\$\{(([<>=]{1,2}.+)\?(.+):(.+)|full)}/g, function(match) {
                     return parseExpression(match, occupied).toString();
                 });
                 // 返回处理后的 graph 对象和其对应的操作

@@ -14,7 +14,7 @@
             const styleEl = document.createElement("script");
             styleEl.setAttribute(
                 "src",
-                "/plugins/ToolBench/assets/static/lib/GraphHandler.js"
+                "/plugins/ToolBench/assets/static/lib/AntVX6Handler.js"
             );
             shadowDOM.appendChild(styleEl);
         }
@@ -22,7 +22,7 @@
             const styleEl = document.createElement("script");
             styleEl.setAttribute(
                 "src",
-                "/plugins/ToolBench/assets/static/lib/ChartHandler.js"
+                "/plugins/ToolBench/assets/static/lib/AntVG2Handler.js"
             );
             shadowDOM.appendChild(styleEl);
         }
@@ -31,27 +31,14 @@
     });
 })();
 
+// 解析ToolBench自适应表达式
 function parseExpression(expression, occupied) {
-    if (expression === "${occupied}") {
+    if (expression === "${full}") {
         return occupied;
     }
-
-    const match = expression.match(/^\$\{\((<|>|<=|>=)(\d+):(.+)\)\((.+)\)}$/);
-
+    const match = expression.replaceAll("full", occupied).match(/^\$\{([<>=]{1,2}.+)\?(.+):(.+)}$/);
     if (match) {
-        const operator = match[1];
-        const threshold = Number(match[2]);
-        const valueIfTrue = match[3] === "occupied" ? occupied : Number(match[3]);
-        const valueIfFalse = match[4] === "occupied" ? occupied : Number(match[4]);
-
-        if ((operator === "<" && this.offsetWidth < threshold) ||
-            (operator === ">" && this.offsetWidth > threshold) ||
-            (operator === "<=" && this.offsetWidth <= threshold) ||
-            (operator === ">=" && this.offsetWidth >= threshold)) {
-            return valueIfTrue;
-        } else {
-            return valueIfFalse;
-        }
+        return eval(`occupied${match[1]} ? ${match[2]} : ${match[3]}`);
     }
-    throw new Error(`wrong chart size expression "${expression}"`);
+    throw new Error(`Invalid expression "${expression}"`);
 }

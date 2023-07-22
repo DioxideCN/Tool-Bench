@@ -42,8 +42,8 @@ public class ToolBenchProcessor implements TemplateHeadProcessor {
                                                     "id", "formatter-init",
                                                     "data-g2-enable", config.getAntvG2().toString(),
                                                     "data-x6-enable", config.getAntvX6().toString()))
-                                            .script("/native/g2.min.js")
-                                            .script("/native/x6.min.js")
+                                            .script("/native/g2.min.js", config.getAntvG2())
+                                            .script("/native/x6.min.js", config.getAntvX6())
                                             .script("/lib/CustomDom.js")
                                             .build()));
                             return Mono.empty();

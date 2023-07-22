@@ -37,7 +37,14 @@ public class DomBuilder {
     // 构建script
     public DomBuilder script(String path) {
         // 直接形成scripts标签
-        DOM_LIST.add(SCRIPT_HEAD + handlePath(path) + "\"" + SCRIPT_END);
+        return script(path, true);
+    }
+
+    public DomBuilder script(String path, boolean trigger) {
+        // 根据条件形成scripts标签
+        if (trigger) {
+            DOM_LIST.add(SCRIPT_HEAD + handlePath(path) + "\"" + SCRIPT_END);
+        }
         return this;
     }
 

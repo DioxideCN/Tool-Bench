@@ -10,7 +10,7 @@
             let matchContainer = regExp.exec(chartStr);
             if (matchContainer !== null) {
                 let occupied = document.getElementById(matchContainer[1]).parentNode.clientWidth;
-                const g2replacer = chartStr.replace(/\$\{(\(.+\)\(.+\)|occupied)}/g, function(match) {return parseExpression(match, occupied).toString();});
+                const g2replacer = chartStr.replace(/\$\{(([<>=]{1,2}.+)\?(.+):(.+)|full)}/g, function(match) {return parseExpression(match, occupied).toString();});
                 // 返回处理后的 chart 对象和其对应的操作
                 return g2replacer + chartOps;
             }

@@ -6,6 +6,18 @@ function getChildren(el, className) {
     return null;
 }
 
+function extractHeight(occupied, width, height) {
+    const occupiedWidth = width.endsWith("%")
+        ? occupied * (Number(width.slice(0, -1)) / 100)
+        : Number(width);
+    height = height.replaceAll("cwidth", occupiedWidth);
+    if (height.startsWith("${") && height.endsWith("}")) {
+        return parseExpression(height, occupied);
+    } else {
+        return height;
+    }
+}
+
 (function() {
     document.addEventListener("DOMContentLoaded", () => {
 
@@ -351,10 +363,11 @@ function getChildren(el, className) {
                     this.render();
                 }
                 render() {
-                    if (this.options.bvid)
-                        this.innerHTML = `
-                            <iframe class="iframe-dom" allowfullscreen="true" scrolling="no" border="0" frameborder="no" framespacing="0" class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width};height:${this.options.height}"></iframe>`;
-                    else this.innerHTML = "请填写正确的bvid";
+                    if (!this.options.bvid) return (this.innerHTML = "请填写正确的bvid");
+                    const realHeight = extractHeight(this.parentElement.offsetWidth, this.options.width, this.options.height);
+                    this.setAttribute("height", realHeight);
+                    this.innerHTML = `
+                        <iframe class="iframe-dom" allowfullscreen="true" scrolling="no" border="0" frameborder="no" framespacing="0" class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width}; height:${realHeight}px;"></iframe>`;
                 }
             }
         );
@@ -368,15 +381,17 @@ function getChildren(el, className) {
                     this.options = {
                         src: this.getAttribute("src") || "",
                         width: this.getAttribute("width") || "100%",
-                        height: this.getAttribute("height") || "500px",
+                        height: this.getAttribute("height") || "500",
                     };
                     this.render();
                 }
                 render() {
                     if (!this.options.src) return (this.innerHTML = "请填写正确的pdf链接");
+                    const realHeight = extractHeight(this.parentElement.offsetWidth, this.options.width, this.options.height);
+                    this.setAttribute("height", realHeight);
                     this.innerHTML = `
                         <div class="tool_pdf">
-                            <iframe class="iframe-dom" src="${this.options.src}" style="width:${this.options.width};height:${this.options.height}"></iframe>
+                            <iframe class="iframe-dom" src="${this.options.src}" style="width:${this.options.width}; height:${realHeight}px;"></iframe>
                         </div>`;
                 }
             }
