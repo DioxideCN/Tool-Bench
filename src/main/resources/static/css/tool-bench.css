@@ -146,6 +146,7 @@
 /* tabs */
 
 .tool_tabs {
+    margin-bottom: 18px;
     width: 100%;
     overflow: hidden;
     background: #232323;
