@@ -21,6 +21,30 @@ function extractHeight(occupied, width, height) {
 (function() {
     document.addEventListener("DOMContentLoaded", () => {
 
+        // 折叠块
+        customElements.define(
+            "tool-expand",
+            class ExpandDom extends HTMLElement {
+                constructor() {
+                    super();
+                    this.title = this.getAttribute("title") || "折叠内容";
+                    this.expand = this.getAttribute("expand") || true;
+                    this.innerHTML = `
+                        <div class="tool-expand">
+                            <div class="tool-expand__title" tabindex="0">
+                                <i class="tool-expand__expander${this.expand?"":"tool-expand__rotate"}"><svg t="1690103390423" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="18" height="18"><path d="M544.907636 649.774545l228.957091-229.003636a46.545455 46.545455 0 0 0-32.907636-79.429818H283.042909a46.545455 46.545455 0 0 0-32.907636 79.453091l228.957091 228.957091a46.545455 46.545455 0 0 0 65.815272 0z" fill="#999"></path></svg></i>
+                                <div class="tool-expand__content${this.expand?"":"tool-expand__close"}">
+                                    ${this.innerHTML}
+                                </div>
+                            </div>
+                            <div class="tool-expand__toolbar">
+                                <div class="toolbar__item"><span data-rel="${this.title}"></span></div>
+                            </div>
+                        </div>`;
+                }
+            }
+        );
+
         // github仓库
         customElements.define(
             "tool-github",
@@ -97,7 +121,7 @@ function extractHeight(occupied, width, height) {
                                                         ${polyline}
                                                     </mask>
                                                 </defs>
-                                                <g transform="translate(0, -5)">
+                                                <g transform="translate(0, 2.0)">
                                                     <rect x="0" y="-2" width="155" height="30" style="stroke: none; fill: url(#gradient-618008006); mask: url(#sparkline-618008006)"></rect>
                                                 </g>
                                             </svg>
@@ -399,3 +423,12 @@ function extractHeight(occupied, width, height) {
 
     })
 })();
+
+window.onload = function() {
+    const svgElement = document.querySelector('.tool-expand__expander');
+    const contentElement = document.querySelector('.tool-expand__content');
+    svgElement.addEventListener('click', function() {
+        svgElement.classList.toggle('tool-expand__rotate');
+        contentElement.classList.toggle('tool-expand__close');
+    });
+}
