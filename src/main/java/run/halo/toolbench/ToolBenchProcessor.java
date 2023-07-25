@@ -30,7 +30,7 @@ public class ToolBenchProcessor implements TemplateHeadProcessor {
         // 全响应式链路
         return InferStream
                 // 独立或文章页 JS
-                .<Void>infer(whichTemplate(context, "page") || whichTemplate(context, "post"))
+                .<Void>infer(true)
                 .success(() -> settingFetcher
                         .fetch("basic", SettingsReader.class)
                         .map(config -> {

@@ -1,3 +1,4 @@
+const g2lib = true;
 (function() {
     // 用来分隔不同的 G2.Chart 对象
     let regexChart = /((?:const|let|var)?\s*[^=]*?=\s*new\s*G2.Chart[\s\S]*?}\);)([\s\S]*?)(?=(?:const|let|var)?\s*[^=]*?=\s*new\s*G2.Chart|$)/g;

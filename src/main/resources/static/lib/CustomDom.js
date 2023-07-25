@@ -427,8 +427,10 @@ function extractHeight(occupied, width, height) {
 window.onload = function() {
     const svgElement = document.querySelector('.tool-expand__expander');
     const contentElement = document.querySelector('.tool-expand__content');
-    svgElement.addEventListener('click', function() {
-        svgElement.classList.toggle('tool-expand__rotate');
-        contentElement.classList.toggle('tool-expand__close');
-    });
+    if (svgElement !== null && contentElement !== null) {
+        svgElement.addEventListener('click', function () {
+            svgElement.classList.toggle('tool-expand__rotate');
+            contentElement.classList.toggle('tool-expand__close');
+        });
+    }
 }

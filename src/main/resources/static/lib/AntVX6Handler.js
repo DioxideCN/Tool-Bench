@@ -1,3 +1,4 @@
+const x6lib = true;
 (function() {
     // 用来分隔不同的 X6.Graph 对象
     let regexGraph = /((?:const|let|var)?\s*[^=]*?=\s*new\s*X6.Graph[\s\S]*?}\)|;)([\s\S]*?)(?=(?:const|let|var)?\s*[^=]*?=\s*new\s*X6.Graph|$)/g;
