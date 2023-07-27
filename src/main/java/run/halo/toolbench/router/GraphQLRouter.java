@@ -37,22 +37,14 @@ public class GraphQLRouter {
 
     // this controller we use full reactive stream
     @GetMapping("/repository")
-    public Mono<String> graphqlQuery(@RequestParam String owner,
+    public Mono<String> repositoryGraphqlQuery(@RequestParam String owner,
                                      @RequestParam String repo) {
-        return this.reactiveSettingFetcher.get("basic")
-                .map(setting -> setting.get("githubToken").asText("Github Token"))
-                .flatMap(token -> WebClient.builder()
-                        // use https://api.github.com/graphql for test unit
-                        .baseUrl("https://api.github.com/graphql")
-                        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .defaultHeader(HttpHeaders.AUTHORIZATION, "token " + token)
-                        .build()
-                        .post()
-                        .bodyValue(Map.of(
-                                "query", GraphQLBuilder.getRepoInfo(owner, repo)
-                        ))
-                        .retrieve()
-                        .bodyToMono(String.class)
-                );
+        return reader.executeQuery(owner, repo, GraphQLBuilder::getRepoInfo);
+    }
+
+    @GetMapping("/discussions")
+    public Mono<String> discussionsGraphqlQuery(@RequestParam String owner,
+                                     @RequestParam String repo) {
+        return reader.executeQuery(owner, repo, GraphQLBuilder::getGiscusInfo);
     }
 }
