@@ -1,21 +1,14 @@
 package run.halo.toolbench.router;
 
 import jakarta.annotation.Resource;
-import lombok.AllArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import run.halo.app.plugin.ApiVersion;
-import run.halo.app.plugin.ReactiveSettingFetcher;
-import run.halo.app.plugin.SettingFetcher;
 import run.halo.toolbench.infra.GraphQLBuilder;
 import run.halo.toolbench.infra.GraphQLReader;
-import run.halo.toolbench.infra.SettingsReader;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * make halo support request graphql api from
@@ -28,12 +21,9 @@ import java.util.Map;
 @ApiVersion("v1alpha1")
 @RequestMapping("/github")
 @RestController
-@AllArgsConstructor
 public class GraphQLRouter {
     @Resource
     private GraphQLReader reader;
-
-    private final ReactiveSettingFetcher reactiveSettingFetcher;
 
     // this controller we use full reactive stream
     @GetMapping("/repository")
