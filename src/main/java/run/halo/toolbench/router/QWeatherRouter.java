@@ -64,7 +64,7 @@ public class QWeatherRouter {
 
     private Mono<JsonNode> getWeatherData(String cityCode, String key) {
         HttpClient client = HttpClient.newHttpClient();
-        URI uri = URI.create(String.format("https://devapi.qweather.com/v7/weather/3d?location=%s&key=%s",
+        URI uri = URI.create(String.format("https://devapi.qweather.com/v7/weather/now?location=%s&key=%s",
                 cityCode,
                 URLEncoder.encode(key, StandardCharsets.UTF_8)));
         HttpRequest request = HttpRequest
