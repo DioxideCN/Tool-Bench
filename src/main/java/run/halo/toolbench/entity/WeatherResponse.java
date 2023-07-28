@@ -26,5 +26,7 @@ public class WeatherResponse {
     public static class Location {
         @SerializedName("id")
         private String id;
+        @SerializedName("name")
+        private String name;
     }
 }

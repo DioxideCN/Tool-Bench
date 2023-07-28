@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import run.halo.toolbench.ToolBenchPlugin;
+import run.halo.toolbench.entity.CityInfo;
 import run.halo.toolbench.entity.WeatherResponse;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class GeoLiteReader {
     @Resource
     private ToolBenchPlugin PLUGIN;
 
-    public Mono<String> getCityCode(String ip, final String key) {
+    public Mono<CityInfo> getCityCode(String ip, final String key) {
         File database = new File(PLUGIN.getConfigContext().getCONFIG_HOME() + File.separator + "GeoLite2-City.mmdb");
         try {
             // build方法应该配合try-with-resource但是会被自动关闭链接导致整个Mono无法再从数据库获取数据
@@ -54,7 +55,7 @@ public class GeoLiteReader {
      * @param longitude 经度
      * @return String类型的响应式体
      */
-    private Mono<String> getCityIdFromLatLon(String latitude, String longitude, final String key) {
+    private Mono<CityInfo> getCityIdFromLatLon(String latitude, String longitude, final String key) {
         HttpClient client = HttpClient.newHttpClient();
         URI uri = URI.create(String.format("https://geoapi.qweather.com/v2/city/lookup?location=%s&key=%s",
                 URLEncoder.encode(longitude + "," + latitude, StandardCharsets.UTF_8),
@@ -74,11 +75,12 @@ public class GeoLiteReader {
      * @param responseBody 经过GZIP解压缩的JSON格式的HttpResponse字符串
      * @return 返回一个从HttpResponse中获取城市ID的响应式体
      */
-    private Mono<String> parseCityId(String responseBody) {
+    private Mono<CityInfo> parseCityId(String responseBody) {
         return Mono.fromCallable(() -> {
             Gson gson = new Gson();
             WeatherResponse response = gson.fromJson(responseBody, WeatherResponse.class);
-            return response.getLocation().get(0).getId();
+            WeatherResponse.Location location = response.getLocation().get(0);
+            return new CityInfo(location.getId(), location.getName());
         });
     }
 
