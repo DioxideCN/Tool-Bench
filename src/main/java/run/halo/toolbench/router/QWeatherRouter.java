@@ -1,9 +1,12 @@
 package run.halo.toolbench.router;
 
-import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.jose.shaded.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,13 +23,13 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * @author Dioxide.CN
  * @date 2023/7/28
  * @since 1.0
  */
+@Slf4j
 @ApiVersion("v1alpha1")
 @RequestMapping("/weather")
 @RestController
@@ -38,7 +41,7 @@ public class QWeatherRouter {
     private final ReactiveSettingFetcher reactiveSettingFetcher;
 
     @GetMapping("/get")
-    public Mono<JsonObject> getCurrentCityWeather(ServerWebExchange exchange) {
+    public Mono<JsonNode> getCurrentCityWeather(ServerWebExchange exchange) {
         InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
         if (remoteAddress == null) return Mono.empty();
         String clientIp = remoteAddress.getAddress().getHostAddress();
@@ -49,17 +52,17 @@ public class QWeatherRouter {
                     return reader.getCityCode(clientIp, key)
                             .flatMap(cityInfo -> getWeatherData(cityInfo.cityId(), key)
                                     .map(weatherData -> {
-                                        // 将两个结果封装为JsonObject返回给前端
-                                        JsonObject result = new JsonObject();
-                                        result.addProperty("cityName", cityInfo.cityName());
-                                        result.add("weatherData", weatherData);
+                                        ObjectMapper mapper = new ObjectMapper();
+                                        ObjectNode result = mapper.createObjectNode();
+                                        result.put("cityName", cityInfo.cityName());
+                                        result.set("weatherData", weatherData);
                                         return result;
                                     })
                             );
                 });
     }
 
-    private Mono<JsonObject> getWeatherData(String cityCode, String key) {
+    private Mono<JsonNode> getWeatherData(String cityCode, String key) {
         HttpClient client = HttpClient.newHttpClient();
         URI uri = URI.create(String.format("https://devapi.qweather.com/v7/weather/3d?location=%s&key=%s",
                 cityCode,
@@ -71,9 +74,13 @@ public class QWeatherRouter {
                 .build();
         // 处理成json对象返回给前端
         return GzipResponse.handle(client, request)
-                .map(responseBody -> {
-                    Gson gson = new Gson();
-                    return gson.fromJson(responseBody, JsonObject.class);
+                .flatMap(responseBody -> {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        return Mono.just(mapper.readTree(responseBody));
+                    } catch (JsonProcessingException e) {
+                        return Mono.error(e);
+                    }
                 });
     }
 
