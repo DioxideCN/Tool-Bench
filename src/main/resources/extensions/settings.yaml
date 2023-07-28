@@ -37,3 +37,9 @@ spec:
           name: githubToken
           validation: required
           value: "GitHub Token"
+          help: "填入你的GitHub Token（需要能获取你Public仓库信息的能力），用于请求GitHub API GraphQL"
+        - $formkit: text
+          label: 和风天气私钥
+          name: qWeatherPrivateKey
+          value: "Private KEY"
+          help: "填入你的和风天气应用私钥，用于请求和风天气API"

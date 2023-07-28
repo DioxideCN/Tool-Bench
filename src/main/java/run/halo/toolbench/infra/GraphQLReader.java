@@ -2,6 +2,7 @@ package run.halo.toolbench.infra;
 
 import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import run.halo.app.plugin.ReactiveSettingFetcher;
 import run.halo.toolbench.ToolBenchPlugin;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +28,7 @@ import java.util.stream.Stream;
  * @date 2023/7/21
  * @since 1.0
  */
+@Slf4j
 @Component
 @AllArgsConstructor
 public class GraphQLReader {
@@ -36,12 +39,12 @@ public class GraphQLReader {
     private ToolBenchPlugin PLUGIN;
 
     public String getGraphQL(String fileName) {
-        Path queryPath = Paths.get(PLUGIN.getConfigContext().getCONFIG_HOME(), "graphql/" + fileName + ".graphql");
+        Path queryPath = Paths.get(PLUGIN.getConfigContext().getCONFIG_HOME(), "graphql" + File.separator + fileName + ".graphql");
         return getFileContent(queryPath);
     }
 
     public String getVariables(String fileName) {
-        Path variablesPath = Paths.get(PLUGIN.getConfigContext().getCONFIG_HOME(), "graphql/" + fileName + ".json");
+        Path variablesPath = Paths.get(PLUGIN.getConfigContext().getCONFIG_HOME(), "graphql" + File.separator + fileName + ".json");
         return getFileContent(variablesPath);
     }
 
@@ -51,7 +54,7 @@ public class GraphQLReader {
         try (Stream<String> stream = Files.lines(filePath)) {
             stream.forEach(s -> variablesBuilder.append(s).append("\n"));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         return variablesBuilder.toString();
     }

@@ -9,5 +9,5 @@ metadata:
     rbac.authorization.halo.run/dependencies: |
       [ "role-template-own-permissions", "role-template-public-apis" ]
 rules:
-  - nonResourceURLs: [ "/apis/api.plugin.halo.run/v1alpha1/plugins/ToolBench/github/*" ]
+  - nonResourceURLs: [ "/apis/api.plugin.halo.run/v1alpha1/plugins/ToolBench/github/*", "/apis/api.plugin.halo.run/v1alpha1/plugins/ToolBench/weather/*" ]
     verbs: [ "get" ]
