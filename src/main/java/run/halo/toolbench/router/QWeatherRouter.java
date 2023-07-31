@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ import run.halo.app.plugin.ReactiveSettingFetcher;
 import run.halo.toolbench.infra.GeoLiteReader;
 import run.halo.toolbench.infra.GzipResponse;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -42,14 +44,23 @@ public class QWeatherRouter {
 
     @GetMapping("/get")
     public Mono<JsonNode> getCurrentCityWeather(ServerWebExchange exchange) {
-        InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
-        if (remoteAddress == null) return Mono.empty();
-        String clientIp = remoteAddress.getAddress().getHostAddress();
+        HttpHeaders headers = exchange.getRequest().getHeaders();
+        String clientIp = headers.getFirst("X-Forwarded-For");
+        if (clientIp == null) {
+            clientIp = headers.getFirst("X-Real-IP");
+        }
+        if (clientIp == null) {
+            InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
+            if (remoteAddress != null) {
+                clientIp = remoteAddress.getAddress().getHostAddress();
+            }
+        }
+        String finalClientIp = clientIp;
         return this.reactiveSettingFetcher.get("basic")
                 .map(setting -> setting.get("qWeatherPrivateKey").asText(""))
                 .flatMap(key -> {
                     if (key.isEmpty()) return Mono.empty();
-                    return reader.getCityCode(clientIp, key)
+                    return reader.getCityCode(finalClientIp, key)
                             .flatMap(cityInfo -> getWeatherData(cityInfo.cityId(), key)
                                     .map(weatherData -> {
                                         ObjectMapper mapper = new ObjectMapper();

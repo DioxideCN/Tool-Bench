@@ -41,6 +41,7 @@ public class FutureDownloader {
         futureDownloader.downloadAndUnzipFileAsync();
     }
 
+    // 远程异步拉取mmdb数据库到本地
     private void downloadAndUnzipFileAsync() {
         String filePath = DIRECTION + File.separator + "GeoLite2-City.mmdb.gz";
         String unzipPath = DIRECTION + File.separator + "GeoLite2-City.mmdb";
