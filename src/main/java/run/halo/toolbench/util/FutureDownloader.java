@@ -41,7 +41,7 @@ public class FutureDownloader {
         futureDownloader.downloadAndUnzipFileAsync();
     }
 
-    // 远程异步拉取mmdb数据库到本地
+    // 总任务流
     private void downloadAndUnzipFileAsync() {
         String filePath = DIRECTION + File.separator + "GeoLite2-City.mmdb.gz";
         String unzipPath = DIRECTION + File.separator + "GeoLite2-City.mmdb";
@@ -66,6 +66,7 @@ public class FutureDownloader {
                 });
     }
 
+    // 远程异步拉取mmdb数据库到本地
     private String downloadFile(String filePath) {
         HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
         HttpRequest request = HttpRequest.newBuilder()
@@ -100,7 +101,6 @@ public class FutureDownloader {
         return filePath;
     }
 
-    @SuppressWarnings("all")
     private String unzipFile(String filePath, String unzipPath) {
         try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(filePath));
              FileChannel outputChannel = FileChannel.open(Path.of(unzipPath), StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
@@ -116,7 +116,6 @@ public class FutureDownloader {
         } catch (IOException e) {
             throw new CompletionException("Unable to unzip file", e);
         }
-
         return unzipPath;
     }
 

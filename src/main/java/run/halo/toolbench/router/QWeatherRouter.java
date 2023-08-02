@@ -25,6 +25,7 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 /**
  * @author Dioxide.CN
@@ -45,32 +46,29 @@ public class QWeatherRouter {
     @GetMapping("/get")
     public Mono<JsonNode> getCurrentCityWeather(ServerWebExchange exchange) {
         HttpHeaders headers = exchange.getRequest().getHeaders();
-        String clientIp = headers.getFirst("X-Forwarded-For");
-        if (clientIp == null) {
-            clientIp = headers.getFirst("X-Real-IP");
-        }
-        if (clientIp == null) {
-            InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
-            if (remoteAddress != null) {
-                clientIp = remoteAddress.getAddress().getHostAddress();
-            }
-        }
-        String finalClientIp = clientIp;
-        return this.reactiveSettingFetcher.get("basic")
-                .map(setting -> setting.get("qWeatherPrivateKey").asText(""))
-                .flatMap(key -> {
-                    if (key.isEmpty()) return Mono.empty();
-                    return reader.getCityCode(finalClientIp, key)
-                            .flatMap(cityInfo -> getWeatherData(cityInfo.cityId(), key)
-                                    .map(weatherData -> {
-                                        ObjectMapper mapper = new ObjectMapper();
-                                        ObjectNode result = mapper.createObjectNode();
-                                        result.put("cityName", cityInfo.cityName());
-                                        result.set("weatherData", weatherData);
-                                        return result;
-                                    })
-                            );
-                });
+        String clientIp = Optional.ofNullable(headers.getFirst("X-Forwarded-For"))
+                .orElseGet(() -> Optional.ofNullable(headers.getFirst("X-Real-IP"))
+                        .orElseGet(() -> {
+                            InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
+                            return (remoteAddress != null) ? remoteAddress.getAddress().getHostAddress() : null;
+                        }));
+        return Optional.ofNullable(clientIp)
+                .map(ip -> this.reactiveSettingFetcher.get("basic")
+                        .map(setting -> setting.get("qWeatherPrivateKey").asText(""))
+                        .flatMap(key -> {
+                            if (key.isEmpty()) return Mono.empty();
+                            return reader.getCityCode(ip, key)
+                                    .flatMap(cityInfo -> getWeatherData(cityInfo.cityId(), key)
+                                            .map(weatherData -> {
+                                                ObjectMapper mapper = new ObjectMapper();
+                                                ObjectNode result = mapper.createObjectNode();
+                                                result.put("cityName", cityInfo.cityName());
+                                                result.set("weatherData", weatherData);
+                                                return (JsonNode)result;
+                                            }));
+                        })
+                )
+                .orElse(Mono.empty());
     }
 
     private Mono<JsonNode> getWeatherData(String cityCode, String key) {

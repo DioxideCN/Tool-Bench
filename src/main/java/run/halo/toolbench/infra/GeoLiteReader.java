@@ -6,10 +6,12 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import run.halo.toolbench.ToolBenchPlugin;
 import run.halo.toolbench.entity.CityInfo;
 import run.halo.toolbench.entity.WeatherResponse;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -34,16 +36,16 @@ public class GeoLiteReader {
     public Mono<CityInfo> getCityCode(String ip, final String key) {
         File database = new File(PLUGIN.getConfigContext().getCONFIG_HOME() + File.separator + "GeoLite2-City.mmdb");
         try {
-            // build方法应该配合try-with-resource但是会被自动关闭链接导致整个Mono无法再从数据库获取数据
             DatabaseReader dbReader = new DatabaseReader.Builder(database).build();
-            // getByName()请求DNS会在该异步模型中发生阻塞
-            InetAddress ipAddress = InetAddress.getByName(ip);
-            return Mono.fromCallable(() -> dbReader.city(ipAddress))
+            return Mono.fromCallable(() -> InetAddress.getByName(ip))
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .flatMap(ipAddress -> Mono.fromCallable(() -> dbReader.city(ipAddress)))
                     .flatMap(response -> getCityIdFromLatLon(
                             response.getLocation().getLatitude().toString(),
                             response.getLocation().getLongitude().toString(),
                             key
-                    ));
+                    ))
+                    .doOnTerminate(() -> safeClose(dbReader));
         } catch (IOException e) {
             return Mono.error(e);
         }
@@ -82,6 +84,14 @@ public class GeoLiteReader {
             WeatherResponse.Location location = response.getLocation().get(0);
             return new CityInfo(location.getId(), location.getName());
         });
+    }
+
+    private void safeClose(Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

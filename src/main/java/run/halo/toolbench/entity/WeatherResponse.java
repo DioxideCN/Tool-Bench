@@ -17,10 +17,6 @@ public class WeatherResponse {
     @SerializedName("location")
     private List<Location> location;
 
-    public void setLocation(List<Location> location) {
-        this.location = location;
-    }
-
     @Getter
     @Setter
     public static class Location {
