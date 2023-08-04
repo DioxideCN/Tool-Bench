@@ -1,7 +1,7 @@
 'use strict';
 
 (function() {
-    window.onload = function() {
+    window.addEventListener('load', function() {
         const {pinyin} = pinyinPro;
         const container = document.querySelector('.categories-container');
         if (container !== null) {
@@ -46,7 +46,7 @@
                 return /^[a-zA-Z0-9]+$/.test(str);
             }
         }
-    }
+    });
 
     window.addEventListener('resize', adjustPadding);
     function adjustPadding() {
