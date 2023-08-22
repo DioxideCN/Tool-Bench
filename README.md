@@ -45,3 +45,15 @@ halo:
     fixedPluginPath:
       - "/path/to/Tool-Bench"
 ```
+
+## 开发ToolBench
+开发ToolBench插件前你必须具备熟练的 JavaScript 和 Java Reactor 知识，以下是本插件的框架结构：
+
+1. `ToolBenchPlugin`类为插件加载入口
+   插件被挂载后会在第一时间调用 Spring Configuration `ConfigFolderConfiguration` 类完成包括：初始化插件配置目录、释放基本配置、远程拉取任务的工作
+2. `router`包分配了自定义的 Halo 接口，同时与资源目录下的 `roleTemplate.yaml` 互相形成完整的权限组
+3. `util/DomBuilder`类提供了链式的前端 dom 构建工具
+4. `util/InferStream`类提供了响应式流形式的条件判断框架
+5. `util/ReflectPost`类提供了反射获取文章原文内容（Markdown化前的）的方法
+6. `infra`包中提供了关于解析配置文件中的 GraphQL 文件能力的类
+7. `CaffeiniCacheConfiguration`类提供了本地缓存的能力来降低前端频繁请求接口的压力

@@ -18,6 +18,7 @@ dependencies {
     implementation platform('run.halo.tools.platform:plugin:2.8.0-SNAPSHOT')
     implementation 'com.vladsch.flexmark:flexmark-all:0.64.8'
     implementation 'com.maxmind.geoip2:geoip2:4.0.1'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.7'
     compileOnly 'run.halo.app:api'
 
     testImplementation 'run.halo.app:api'
