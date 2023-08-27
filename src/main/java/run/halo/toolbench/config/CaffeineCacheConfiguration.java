@@ -3,8 +3,14 @@ package run.halo.toolbench.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.Resource;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import reactor.core.publisher.Mono;
+import run.halo.app.plugin.ReactiveSettingFetcher;
+import run.halo.app.plugin.SettingFetcher;
 import run.halo.toolbench.router.QWeatherRouter;
 
 import java.util.concurrent.TimeUnit;
@@ -21,22 +27,26 @@ import java.util.concurrent.TimeUnit;
  * @date 2023/8/5
  * @since 1.0
  */
+@Slf4j
 @Configuration
 public class CaffeineCacheConfiguration {
+    @Resource
+    private SettingFetcher settingFetcher;
+
     // ip到城市ID
     @Bean(name = "ipToCityIDCache")
     public Cache<String, String> ipToCityIDCache() {
         return Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .maximumSize(1_000)
-                .build();
+                        .expireAfterWrite(30, TimeUnit.MINUTES)
+                        .maximumSize(1_000)
+                        .build();
     }
 
     // 城市ID到天气信息
     @Bean(name = "cityIDToWeatherCache")
     public Cache<String, JsonNode> cityIDToWeatherCache() {
         return Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(30, TimeUnit.MINUTES)
                 .maximumSize(1_000)
                 .build();
     }

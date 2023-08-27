@@ -1,4 +1,4 @@
-package run.halo.toolbench.infra;
+package run.halo.toolbench.entity;
 
 import lombok.*;
 

@@ -4,7 +4,7 @@ metadata:
   name: ToolBench
 spec:
   enabled: true
-  version: 1.0.3
+  version: 1.0.4
   requires: ">=2.8.0"
   author:
     name: Dioxide.CN

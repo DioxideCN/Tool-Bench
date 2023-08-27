@@ -1,4 +1,4 @@
-package run.halo.toolbench;
+package run.halo.toolbench.processor;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,16 +9,15 @@ import org.thymeleaf.processor.element.IElementModelStructureHandler;
 import reactor.core.publisher.Mono;
 import run.halo.app.plugin.SettingFetcher;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
-import run.halo.toolbench.infra.SettingsReader;
+import run.halo.toolbench.entity.SettingsReader;
 import run.halo.toolbench.util.DomBuilder;
 import run.halo.toolbench.util.InferStream;
-import run.halo.toolbench.util.ReflectPost;
 
 import java.util.Map;
 
 @Component
 @AllArgsConstructor
-public class ToolBenchProcessor implements TemplateHeadProcessor {
+public class HeadProcessor implements TemplateHeadProcessor {
 
     private final SettingFetcher settingFetcher;
     private static final String TEMPLATE_ID_VARIABLE = "_templateId";
@@ -34,7 +33,6 @@ public class ToolBenchProcessor implements TemplateHeadProcessor {
                 .success(() -> settingFetcher
                         .fetch("basic", SettingsReader.class)
                         .map(config -> {
-                            ReflectPost.handle(context);
                             model.add(modelFactory.createText(
                                     DomBuilder.use()
                                             .style("/css/tool-bench.css")
