@@ -14,19 +14,14 @@ public class ToolBenchPlugin extends BasePlugin {
 
     private final ConfigFolderConfiguration configFolderConfiguration;
 
-    public ToolBenchPlugin(PluginWrapper wrapper,
-                           ConfigFolderConfiguration configFolderConfiguration) {
-        super(wrapper);
+    public ToolBenchPlugin(ConfigFolderConfiguration configFolderConfiguration) {
+        super();
         this.configFolderConfiguration = configFolderConfiguration;
     }
 
     @Override
     public void start() {
         this.configFolderConfiguration.init(ToolBenchPlugin.class);
-    }
-
-    @Override
-    public void stop() {
     }
 
     public ConfigFolderConfiguration getConfigContext() {

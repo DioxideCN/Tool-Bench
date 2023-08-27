@@ -5,6 +5,7 @@ import reactor.core.publisher.Mono;
 import run.halo.toolbench.util.InferStream;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author Dioxide.CN
