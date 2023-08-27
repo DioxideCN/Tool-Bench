@@ -46,34 +46,28 @@ spec:
     - group: post
       label: 文章设置
       formSchema:
-        - $formkit: radio
-          name: enableToolElement
-          id: enableToolElement
-          label: tool标签
-          value: true
-          help: "对文章页是否启用<tool-?>标签的支持"
-          options:
-            - value: true
-              label: 启用
-            - value: false
-              label: 禁用
-        - $formkit: radio
-          name: enableCountMeta
-          id: enableCountMeta
-          label: 额外tool标签
-          value: true
-          help: "对文章页是否启用字数统计和图片统计的额外信息"
-          options:
-            - value: true
-              label: 启用
-            - value: false
-              label: 禁用
-        - $formkit: textarea
+        - $formkit: repeater
+          name: customElementPrefix
+          label: 自定义标签
+          help: "如果想在文章中支持自定义的标签，只需要在这里新增你的标签前缀即可。如：想支持<tool-xxx>类型的自定义标签，只需填写tool即可"
+          value:
+            - tagName: "tool"
+            - tagName: "joe"
+            - tagName: "hao"
+          children:
+            - $formkit: text
+              name: tagName
+              label: 标签前缀
+              placeholder: "请输入标签的前缀"
+              validation: required
+        - $formkit: code
+          language: html
           name: head
           id: head
           label: 文首追加
           help: "在所有文章的首部插入额外的HTML代码"
-        - $formkit: textarea
+        - $formkit: code
+          language: html
           name: tail
           id: tail
           label: 文末追加

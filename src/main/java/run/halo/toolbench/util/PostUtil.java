@@ -8,6 +8,7 @@ import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,8 +19,8 @@ import java.util.regex.Pattern;
  */
 public class PostUtil {
 
-    public static String fixMarkdownAndElementTag(String content) {
-        return fixElementTag(fixMarkdown(content));
+    public static String fixMarkdownAndElementTag(String content, Set<String> elemPrefixes) {
+        return fixElementTag(fixMarkdown(content), elemPrefixes);
     }
 
     public static String fixMarkdown(String raw) {
@@ -32,15 +33,21 @@ public class PostUtil {
         return renderer.render(document);
     }
 
-    public static String fixElementTag(String content) {
-        Matcher matcher = Pattern.compile("&lt;(/tool-.*?|tool-.*?)&gt;").matcher(content);
-        StringBuilder sb = new StringBuilder();
-        while (matcher.find()) {
-            String replacement = matcher.group(1).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-            matcher.appendReplacement(sb, "<" + replacement + ">");
+    public static String fixElementTag(String content, Set<String> elemPrefixes) {
+        String result = content;
+        for (String prefix : elemPrefixes) {
+            StringBuilder sb = new StringBuilder();
+            Matcher matcher =
+                    Pattern.compile("&lt;(/" + prefix + "-.*?|" + prefix + "-.*?)&gt;")
+                            .matcher(result);
+            while (matcher.find()) {
+                String replacement = matcher.group(1).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+                matcher.appendReplacement(sb, "<" + replacement + ">");
+            }
+            matcher.appendTail(sb);
+            result = sb.toString();
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+        return result;
     }
 
     public static int countWords(String htmlText) {
