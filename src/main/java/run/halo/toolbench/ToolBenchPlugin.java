@@ -1,5 +1,6 @@
 package run.halo.toolbench;
 
+import jakarta.annotation.Resource;
 import org.pf4j.PluginWrapper;
 import org.springframework.stereotype.Component;
 import run.halo.app.plugin.BasePlugin;
@@ -14,14 +15,19 @@ public class ToolBenchPlugin extends BasePlugin {
 
     private final ConfigFolderConfiguration configFolderConfiguration;
 
-    public ToolBenchPlugin(ConfigFolderConfiguration configFolderConfiguration) {
-        super();
+    public ToolBenchPlugin(PluginWrapper wrapper,
+                           ConfigFolderConfiguration configFolderConfiguration) {
+        super(wrapper);
         this.configFolderConfiguration = configFolderConfiguration;
     }
 
     @Override
     public void start() {
         this.configFolderConfiguration.init(ToolBenchPlugin.class);
+    }
+
+    @Override
+    public void stop() {
     }
 
     public ConfigFolderConfiguration getConfigContext() {

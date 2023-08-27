@@ -1,6 +1,6 @@
 plugins {
     id "run.halo.plugin.devtools" version "0.0.5"
-    id "io.freefair.lombok" version "8.0.1"
+    id "io.freefair.lombok" version "8.0.0-rc2"
     id 'java'
 }
 
@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform('run.halo.tools.platform:plugin:2.8.0-SNAPSHOT')
+    implementation platform('run.halo.tools.platform:plugin:2.9.0-SNAPSHOT')
     implementation 'com.vladsch.flexmark:flexmark-all:0.64.8'
     implementation 'com.maxmind.geoip2:geoip2:4.0.1'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.7'
@@ -31,10 +31,4 @@ test {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
 }
