@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'run.halo.toolbench'
-sourceCompatibility = JavaVersion.VERSION_20
+sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     maven { url 'https://s01.oss.sonatype.org/content/repositories/releases' }
@@ -35,6 +35,6 @@ tasks.withType(JavaCompile).configureEach {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(20)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }

@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.cache.Cache;
-import jakarta.annotation.Nullable;
+import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,17 +20,14 @@ import reactor.core.publisher.Mono;
 import run.halo.app.plugin.ApiVersion;
 import run.halo.app.plugin.ReactiveSettingFetcher;
 import run.halo.toolbench.config.CaffeineCacheConfiguration;
-import run.halo.toolbench.entity.WeatherResponse;
 import run.halo.toolbench.infra.GeoLiteReader;
 import run.halo.toolbench.infra.GzipResponse;
 
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Optional;
 
 /**

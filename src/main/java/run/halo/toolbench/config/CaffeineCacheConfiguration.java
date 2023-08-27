@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import run.halo.toolbench.entity.WeatherResponse;
 import run.halo.toolbench.router.QWeatherRouter;
 
 import java.util.concurrent.TimeUnit;
@@ -25,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class CaffeineCacheConfiguration {
     // ip到城市ID
-    @Bean
+    @Bean(name = "ipToCityIDCache")
     public Cache<String, String> ipToCityIDCache() {
         return Caffeine.newBuilder()
                 .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -34,7 +33,7 @@ public class CaffeineCacheConfiguration {
     }
 
     // 城市ID到天气信息
-    @Bean
+    @Bean(name = "cityIDToWeatherCache")
     public Cache<String, JsonNode> cityIDToWeatherCache() {
         return Caffeine.newBuilder()
                 .expireAfterWrite(10, TimeUnit.MINUTES)
