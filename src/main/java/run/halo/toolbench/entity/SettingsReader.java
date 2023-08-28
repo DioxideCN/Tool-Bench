@@ -13,8 +13,6 @@ import lombok.*;
 @ToString
 @EqualsAndHashCode
 public class SettingsReader {
-    Boolean antvG2;
-    Boolean antvX6;
     String directory;
     String githubToken;
 }

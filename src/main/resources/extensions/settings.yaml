@@ -7,31 +7,16 @@ spec:
     - group: basic
       label: 通用设置
       formSchema:
-        - $formkit: radio
-          name: antvG2
-          id: antvG2
-          label: AntV G2
-          value: false
-          options:
-            - value: true
-              label: 启用
-            - value: false
-              label: 禁用
-        - $formkit: radio
-          name: antvX6
-          id: antvX6
-          label: AntV X6
-          value: false
-          options:
-            - value: true
-              label: 启用
-            - value: false
-              label: 禁用
         - $formkit: text
           label: 目录页标题
           name: directory
           validation: required
           value: "目录"
+        - $formkit: text
+          label: 目录页副标题
+          name: directorySubContent
+          validation: required
+          value: "目录页将按所有文章的分类进行排序展示"
         - $formkit: text
           label: GitHub Token
           name: githubToken
@@ -44,8 +29,90 @@ spec:
           help: "填入你的和风天气应用私钥，用于请求和风天气API"
           validation: required
     - group: post
-      label: 文章设置
+      label: 渲染增强
       formSchema:
+        - $formkit: group
+          name: codeHead
+          label: "内容首部"
+          help: "在内容的首部插入额外的HTML代码"
+          value:
+            rule:
+            codeForBoth:
+            codeForPost:
+            codeForPage:
+          children:
+            - $formkit: select
+              name: rule
+              id: codeHeadRule
+              label: 应用规则
+              value: none
+              options:
+                - label: 不使用
+                  value: none
+                - label: 为文章页启用
+                  value: post
+                - label: 为独立页面启用
+                  value: page
+                - label: 文章页与独立页面公用
+                  value: all
+                - label: 文章页与独立页面隔离
+                  value: isolation
+            - $formkit: code
+              name: codeForBoth
+              label: 额外代码
+              if: "$get(codeHeadRule).value === all"
+              help: "为文章页面和独立页面的内容首部插入额外HTML代码"
+            - $formkit: code
+              name: codeForPost
+              label: 文章页面额外代码
+              if: "$get(codeHeadRule).value === post || $get(codeHeadRule).value === isolation"
+              help: "为文章页面的内容首部插入额外HTML代码"
+            - $formkit: code
+              name: codeForPage
+              label: 独立页面额外代码
+              if: "$get(codeHeadRule).value === page || $get(codeHeadRule).value === isolation"
+              help: "为独立页面的内容首部插入额外HTML代码"
+        - $formkit: group
+          name: codeTail
+          label: "内容尾部"
+          help: "在内容的尾部插入额外的HTML代码"
+          value:
+            rule:
+            codeForBoth:
+            codeForPost:
+            codeForPage:
+          children:
+            - $formkit: select
+              name: rule
+              id: codeTailRule
+              label: 应用规则
+              value: none
+              options:
+                - label: 不使用
+                  value: none
+                - label: 为文章页启用
+                  value: post
+                - label: 为独立页面启用
+                  value: page
+                - label: 文章页与独立页面公用
+                  value: all
+                - label: 文章页与独立页面隔离
+                  value: isolation
+            - $formkit: code
+              name: codeForBoth
+              label: 额外代码
+              if: "$get(codeTailRule).value === all"
+              help: "为文章页面和独立页面的内容尾部插入额外HTML代码"
+            - $formkit: code
+              name: codeForPost
+              label: 文章页面额外代码
+              if: "$get(codeTailRule).value === post || $get(codeTailRule).value === isolation"
+              help: "为文章页面的内容尾部插入额外HTML代码"
+            - $formkit: code
+              name: codeForPage
+              label: 独立页面额外代码
+              if: "$get(codeTailRule).value === page || $get(codeTailRule).value === isolation"
+              help: "为独立页面的内容尾部插入额外HTML代码"
         - $formkit: repeater
           name: customElementPrefix
           label: 自定义标签
@@ -60,15 +127,25 @@ spec:
               label: 标签前缀
               placeholder: "请输入标签的前缀"
               validation: required
-        - $formkit: code
-          language: html
-          name: head
-          id: head
-          label: 文首追加
-          help: "在所有文章的首部插入额外的HTML代码"
-        - $formkit: code
-          language: html
-          name: tail
-          id: tail
-          label: 文末追加
-          help: "在所有文章的尾部插入额外的HTML代码"
+        - $formkit: radio
+          name: antvG2
+          id: antvG2
+          label: AntV G2
+          value: false
+          help: "是否需要在页面中启用AntV G2"
+          options:
+            - value: true
+              label: 启用
+            - value: false
+              label: 禁用
+        - $formkit: radio
+          name: antvX6
+          id: antvX6
+          label: AntV X6
+          value: false
+          help: "是否需要在页面中启用AntV X6"
+          options:
+            - value: true
+              label: 启用
+            - value: false
+              label: 禁用

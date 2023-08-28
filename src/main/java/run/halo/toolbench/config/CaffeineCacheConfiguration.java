@@ -4,12 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.Resource;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import reactor.core.publisher.Mono;
-import run.halo.app.plugin.ReactiveSettingFetcher;
 import run.halo.app.plugin.SettingFetcher;
 import run.halo.toolbench.router.QWeatherRouter;
 

@@ -24,20 +24,24 @@ public class DirectoryRouter {
 
     private final ReactiveSettingFetcher settingFetcher;
     private static final String TEMPLATE_ID_VARIABLE = "_templateId";
+    private static final String KEY = "directory";
+    private static final String TITLE = "目录";
+    private static final String SUBTITLE = "目录页将按所有文章的分类进行排序展示";
 
     @Bean
     RouterFunction<ServerResponse> directoryRouter() {
         return route(GET("/directory"),
-                request -> ServerResponse.ok().render(
-                    "directory",
+                request -> ServerResponse.ok().render(KEY,
                     Map.of(
-                            TEMPLATE_ID_VARIABLE, "directory",
+                            TEMPLATE_ID_VARIABLE, KEY,
                             "title", Mono.fromCallable(() -> this.settingFetcher
                                     .get("basic").map(
-                                            setting -> setting
-                                                    .get("directory")
-                                                    .asText("目录")
-                                    ).defaultIfEmpty("目录"))
+                                            setting -> setting.get(KEY)
+                                                    .asText(TITLE))),
+                            "subtitle", Mono.fromCallable(() -> this.settingFetcher
+                                    .get("basic").map(
+                                            setting -> setting.get("directorySubContent")
+                                                    .asText(SUBTITLE)))
                     )
                 )
         );

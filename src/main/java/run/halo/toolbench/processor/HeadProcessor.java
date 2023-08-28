@@ -9,7 +9,7 @@ import org.thymeleaf.processor.element.IElementModelStructureHandler;
 import reactor.core.publisher.Mono;
 import run.halo.app.plugin.SettingFetcher;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
-import run.halo.toolbench.entity.SettingsReader;
+import run.halo.toolbench.entity.RendererReader;
 import run.halo.toolbench.util.DomBuilder;
 import run.halo.toolbench.util.InferStream;
 
@@ -31,7 +31,7 @@ public class HeadProcessor implements TemplateHeadProcessor {
                 // 独立或文章页 JS
                 .<Void>infer(true)
                 .success(() -> settingFetcher
-                        .fetch("basic", SettingsReader.class)
+                        .fetch("post", RendererReader.class)
                         .map(config -> {
                             model.add(modelFactory.createText(
                                     DomBuilder.use()
@@ -54,6 +54,10 @@ public class HeadProcessor implements TemplateHeadProcessor {
                                 .script("/native/pinyin-pro.min.js")
                                 .script("/lib/DirectorySort.js")
                                 .build())))
+                .infer(whichTemplate(context, "page"))
+                .success(() -> {
+
+                })
                 .last();
     }
 

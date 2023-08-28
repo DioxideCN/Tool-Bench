@@ -15,8 +15,10 @@ import java.util.List;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class PostReader {
-    String head;
-    String tail;
+public class RendererReader {
+    Boolean antvG2;
+    Boolean antvX6;
+    LinkedHashMap<String, String> codeHead;
+    LinkedHashMap<String, String> codeTail;
     List<LinkedHashMap<String, String>> customElementPrefix;
 }

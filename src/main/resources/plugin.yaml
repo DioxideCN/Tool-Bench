@@ -14,6 +14,6 @@ spec:
   configMapName: plugin-tool-bench-configMap
   homepage: https://github.com/DioxideCN/Tool-Bench
   displayName: "ToolBench"
-  description: "ToolBench是一款为Halo2.x博客集成更多标签样式与功能支持的插件"
+  description: "ToolBench为2.8.0及更高版本的Halo集成了更多工具和API"
   license:
     - name: "GNU GPLv3"
