@@ -1,4 +1,4 @@
-![Banner](image/Banner.png)
+![Banner](Banner.png)
 
 # Tool-Bench
 感谢您下载并使用 Tool Bench 插件，本插件为 Halo 2.x 博客集成了更多的API与能力。加入我们的 QQ 交流群 697197698 以获得更好的技术支持。以下是本插件常用的指南和安装方法：
