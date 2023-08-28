@@ -4,7 +4,9 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -37,9 +39,7 @@ public class CaffeineTest {
         prefixes.add("hao");
         prefixes.add("joe");
         String originalString = """
-                This is a test string with &lt;tool-mtitle th=123&gt;&lt;/tool-mtitle&gt; tags.
-                This is a test string with &lt;joe-mtitle th=123&gt;&lt;/joe-mtitle&gt; tags.
-                This is a test string with &lt;hao-mtitle th=123&gt;&lt;/hao-mtitle&gt; tags.
+                <tool-msg type="success">在该标签中，X6对象的变量<code>width</code>和<code>height</code>支持TB表达式，但不支持<code>cwidth</code></tool-msg>
                 """;
         System.out.println(fixElementTag(originalString, prefixes));
     }
@@ -48,17 +48,32 @@ public class CaffeineTest {
         String result = content;
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();
-            Matcher matcher =
-                    Pattern.compile("&lt;(/" + prefix + "-.*?|" + prefix + "-.*?)&gt;")
-                            .matcher(result);
+            Matcher matcher = Pattern.compile("&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;", Pattern.DOTALL)
+                    .matcher(result);
             while (matcher.find()) {
-                String replacement = matcher.group(1).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-                matcher.appendReplacement(sb, "<" + replacement + ">");
+                String openingTag = matcher.group(1);
+                String innerContent = matcher.group(2);
+                String closingTag = matcher.group(4);
+                String fullReplacement = "<" + openingTag + ">" +
+                        innerContent.replaceAll("&lt;", "<").replaceAll("&gt;", ">") +
+                        "</" + closingTag + ">";
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(fullReplacement));
             }
             matcher.appendTail(sb);
             result = sb.toString();
         }
-        return result;
+        // 恢复<code>标签内的内容
+        StringBuilder finalResult = new StringBuilder();
+        Matcher finalCodeMatcher = Pattern.compile("<(code.*?)>(([\\s\\S])*?)</code>", Pattern.DOTALL).matcher(result);
+        while (finalCodeMatcher.find()) {
+            String openingTag = finalCodeMatcher.group(1);
+            String replacement = finalCodeMatcher.group(2)
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;");
+            finalCodeMatcher.appendReplacement(finalResult, Matcher.quoteReplacement("<" + openingTag + ">" + replacement + "</code>"));
+        }
+        finalCodeMatcher.appendTail(finalResult);
+        return finalResult.toString();
     }
 
 }

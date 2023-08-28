@@ -6,6 +6,7 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
  * @date 2023/8/27
  * @since 1.0
  */
+@Slf4j
 public class PostUtil {
 
     public static String fixMarkdownAndElementTag(String content, Set<String> elemPrefixes) {
@@ -33,21 +35,36 @@ public class PostUtil {
         return renderer.render(document);
     }
 
-    public static String fixElementTag(String content, Set<String> elemPrefixes) {
+    private static String fixElementTag(String content, Set<String> elemPrefixes) {
         String result = content;
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();
-            Matcher matcher =
-                    Pattern.compile("&lt;(/" + prefix + "-.*?|" + prefix + "-.*?)&gt;")
-                            .matcher(result);
+            Matcher matcher = Pattern.compile("&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;", Pattern.DOTALL)
+                    .matcher(result);
             while (matcher.find()) {
-                String replacement = matcher.group(1).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-                matcher.appendReplacement(sb, "<" + replacement + ">");
+                String openingTag = matcher.group(1);
+                String innerContent = matcher.group(2);
+                String closingTag = matcher.group(4);
+                String fullReplacement = "<" + openingTag + ">" +
+                        innerContent.replaceAll("&lt;", "<").replaceAll("&gt;", ">") +
+                        "</" + closingTag + ">";
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(fullReplacement));
             }
             matcher.appendTail(sb);
             result = sb.toString();
         }
-        return result;
+        // 恢复<code>标签内的内容
+        StringBuilder finalResult = new StringBuilder();
+        Matcher finalCodeMatcher = Pattern.compile("<(code.*?)>(([\\s\\S])*?)</code>", Pattern.DOTALL).matcher(result);
+        while (finalCodeMatcher.find()) {
+            String openingTag = finalCodeMatcher.group(1);
+            String replacement = finalCodeMatcher.group(2)
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;");
+            finalCodeMatcher.appendReplacement(finalResult, Matcher.quoteReplacement("<" + openingTag + ">" + replacement + "</code>"));
+        }
+        finalCodeMatcher.appendTail(finalResult);
+        return finalResult.toString();
     }
 
     public static int countWords(String htmlText) {
