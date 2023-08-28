@@ -1,4 +1,4 @@
-![Banner](./Banner.png)
+![Banner](https://camo.githubusercontent.com/aff6f08dd2a3a49c0a221326a42e9a363a9529ad6fdbf711535d463b501f9cef/68747470733a2f2f64696f786964652d636e2e696e6b2f75706c6f61642f42616e6e65722e706e67)
 
 # Tool-Bench
 感谢您下载并使用 Tool Bench 插件，本插件为 Halo 2.x 博客集成了更多的API与能力。加入我们的 QQ 交流群 697197698 以获得更好的技术支持。以下是本插件常用的指南和安装方法：
