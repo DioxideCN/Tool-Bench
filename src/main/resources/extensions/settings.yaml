@@ -28,6 +28,7 @@ spec:
           name: qWeatherPrivateKey
           help: "填入你的和风天气应用私钥，用于请求和风天气API"
           validation: required
+
     - group: post
       label: 渲染增强
       formSchema:
@@ -149,3 +150,22 @@ spec:
               label: 启用
             - value: false
               label: 禁用
+
+    - group: payment
+      label: 支付模块
+      formSchema:
+        - $formkit: text
+          label: APP ID
+          name: appId
+          help: "填写你的支付宝当面付的应用ID"
+          validation: required
+        - $formkit: text
+          label: Private Key
+          name: privateKey
+          help: "填写你的支付宝当面付的应用私钥"
+          validation: required
+        - $formkit: text
+          label: Public Key
+          name: publicKey
+          help: "填写你的支付宝公钥"
+          validation: required

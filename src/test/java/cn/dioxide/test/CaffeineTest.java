@@ -39,7 +39,7 @@ public class CaffeineTest {
         prefixes.add("hao");
         prefixes.add("joe");
         String originalString = """
-                <p>&lt;tool-msg type="success"&gt;在该标签中，X6对象的变量&lt;code&gt;width&lt;/code&gt;和&lt;code&gt;height&lt;/code&gt;支持TB表达式，但不支持&lt;code&gt;cwidth&lt;/code&gt;&lt;/tool-msg&gt;</p><p></p><p>&lt;tool-tabs&gt;&lt;div class="_tpl"&gt;{tabs-pane 第一个}单身狗的故事{/tabs-pane}{tabs-pane 第二个}小说家的故事{/tabs-pane}&lt;/div&gt;&lt;/tool-tabs&gt;</p><p></p><p>&lt;hao-tabs id="Demo2" index="2"&gt;<br>&lt;div class="_tpl" &gt; <br>{tabs-item test2 1}&lt;p&gt;&lt;strong&gt;This is Tab 1.&lt;[表情]&gt;&lt;/p&gt;{/tabs-item}<br>{tabs-item test2 2}&lt;p&gt;&lt;strong&gt;This is Tab 2.&lt;[表情]&gt;&lt;/p&gt;{/tabs-item}<br>{tabs-item test2 3}&lt;p&gt;&lt;strong&gt;This is Tab 3.&lt;[表情]&gt;&lt;/p&gt;{/tabs-item}<br>&lt;/div&gt; <br>&lt;/hao-tabs&gt;</p>
+                <p>&lt;tool-tabs&gt;<br>&lt;div class="_tpl"&gt;<br>{tabs-pane 第一个}单身狗的故事{/tabs-pane}<br>{tabs-pane 第二个}小说家的故事{/tabs-pane}<br>&lt;/div&gt;<br>&lt;/tool-tabs&gt;</p>
                 """;
         System.out.println(fixElementTag(originalString, prefixes));
     }
@@ -49,7 +49,7 @@ public class CaffeineTest {
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();
             Matcher matcher = Pattern
-                    .compile("<p>&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;</p>", Pattern.DOTALL)
+                    .compile("(?:<p>)?&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;(?:</p>)?", Pattern.DOTALL)
                     .matcher(result);
             while (matcher.find()) {
                 String openingTag = matcher.group(1);

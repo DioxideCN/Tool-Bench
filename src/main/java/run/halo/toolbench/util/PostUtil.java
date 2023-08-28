@@ -36,10 +36,18 @@ public class PostUtil {
     }
 
     private static String fixElementTag(String content, Set<String> elemPrefixes) {
+        log.info("raw -> " + content);
         String result = content;
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();
-            Matcher matcher = Pattern.compile("<p>&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;</p>", Pattern.DOTALL)
+            // 如果带了相邻的p标签要将相邻的p标签移除
+            Matcher matcher = Pattern
+                    .compile("(?:<p>)?&lt;(" +
+                            Pattern.quote(prefix) +
+                            "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" +
+                            Pattern.quote(prefix) +
+                            "-.+?)&gt;(?:</p>)?",
+                            Pattern.DOTALL)
                     .matcher(result);
             while (matcher.find()) {
                 String openingTag = matcher.group(1);
