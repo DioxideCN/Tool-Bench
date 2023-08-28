@@ -39,7 +39,7 @@ public class PostUtil {
         String result = content;
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();
-            Matcher matcher = Pattern.compile("&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;", Pattern.DOTALL)
+            Matcher matcher = Pattern.compile("<p>&lt;(" + Pattern.quote(prefix) + "-.+?)&gt;(([\\s\\S])*?)&lt;/?(" + Pattern.quote(prefix) + "-.+?)&gt;</p>", Pattern.DOTALL)
                     .matcher(result);
             while (matcher.find()) {
                 String openingTag = matcher.group(1);
