@@ -57,6 +57,8 @@ const emit = defineEmits<{
 
 onMounted(async () => {
   // 初始化Toast编辑器
+  let lineNumber: number = 1;
+  let prevIndexMap = new Map<number, number>();
   const instance: Editor = new Editor({
     el: document.querySelector('#toast-editor')!,
     previewStyle: 'vertical',
@@ -181,17 +183,93 @@ onMounted(async () => {
   instance.addCommand('markdown', 'switchTheme', () => switchTheme());
   // 恢复缓存
   instance.setMarkdown(props.raw);
+
+  // 构造行数容器
+  const editorArea: Element = document.getElementsByClassName('toastui-editor md-mode')[0];
+  const mdEditor: Element = editorArea.getElementsByClassName('ProseMirror')[0];
+  const lineNumberDOM = document.createElement('div');
+  lineNumberDOM.className = 'editor-line-number';
+  lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
+  editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
+
+  function throttle(fn: Function, delay: number) {
+    let lastCall = 0;
+    return function (...args: any[]) {
+      const now = new Date().getTime();
+      if (now - lastCall < delay) {
+        return;
+      }
+      lastCall = now;
+      return fn(...args);
+    };
+  }
+  
+  // 更新行号
+  function updateLineNumber(val: number,
+                            markMap: Map<number, number>): void {
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < val; i++) {
+      const newLineItem = document.createElement("div");
+      newLineItem.className = "line-item";
+      newLineItem.textContent = (i+1).toString();
+      fragment.appendChild(newLineItem);
+      if (markMap.has(i)) {
+        const count = markMap.get(i)!; // 确保有值
+        for (let j = 0; j < count; j++) {
+          const indentLineItem = document.createElement("div");
+          indentLineItem.className = "line-item";
+          fragment.appendChild(indentLineItem);
+        }
+      }
+    }
+    lineNumberDOM.innerHTML = '';
+    lineNumberDOM.appendChild(fragment);
+  }
+  
+  // 节流行数监听器
+  const countLines = throttle(() => {
+    const indexMap: Map<number, number> = new Map();
+    const currLineNumber: number = mdEditor.childNodes.length;
+    mdEditor.childNodes.forEach((childNode, index) => {
+      // @ts-ignore
+      const height = childNode.clientHeight || childNode.offsetHeight;
+      const tempCounter = Math.ceil(height / 27);
+      if (tempCounter > 1) {
+        indexMap.set(index, tempCounter - 1);
+      }
+    })
+    if (JSON.stringify(Array.from(indexMap)) !== JSON.stringify(Array.from(prevIndexMap)) || lineNumber !== currLineNumber) {
+      updateLineNumber(currLineNumber, indexMap);
+      prevIndexMap = indexMap;
+      lineNumber = currLineNumber;
+    }
+  }, 10);
+  countLines();
+  
+  // 互相绑定滚动事件
+  mdEditor.addEventListener("scroll", function() {
+    lineNumberDOM.scrollTop = mdEditor.scrollTop;
+  });
+  lineNumberDOM.addEventListener("scroll", function() {
+    mdEditor.scrollTop = lineNumberDOM.scrollTop;
+  });
+  
   // 监听文本变化
-  instance.on('change', () => {
+  function updateContext(): void {
     const markdown = instance.getMarkdown();
     emit('update:raw', markdown);
     emit('update:content', markdown);
     if (markdown !== props.raw) {
       emit("update", markdown);
     }
-    console.log("update:raw -> \n" + instance.getMarkdown());
-  });
-  
+  }
+  const _interval = setInterval(() => {
+    countLines();
+    updateContext();
+    if (!document.querySelector('#toast-editor')) {
+      clearInterval(_interval);
+    }
+  }, 10);
 });
 </script>
 
@@ -210,7 +288,6 @@ onMounted(async () => {
   --display-p: #222;
   --display-quoto: rgba(0,0,0,.05);
   --display-border: #eaedf0;
-
   --editor-panel-bg: #fff;
 }
 
@@ -225,7 +302,6 @@ onMounted(async () => {
   --display-p: rgb(204,204,204);
   --display-quoto: rgba(110, 118, 129, 0.4);
   --display-border: #2c3135;
-
   --editor-panel-bg: rgb(24,24,24);
 }
 
@@ -338,7 +414,7 @@ onMounted(async () => {
   border: none!important;
 }
 
-.toastui-editor-md-container .toastui-editor { background: var(--editor-editor-left); }
+.toastui-editor-md-container .toastui-editor { background: var(--editor-editor-left); display: flex; }
 .toastui-editor-md-container .toastui-editor-md-preview { 
   color: var(--display-p);
   background: var(--editor-preview-bg);
@@ -346,13 +422,61 @@ onMounted(async () => {
 
 .toastui-editor-contents .task-list-item:before { top: 4px; }
 .toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents,
-.toastui-editor-defaultUI .ProseMirror { font-size: 18px; }
+.toastui-editor-md-heading1,
+.toastui-editor-md-heading2,
+.toastui-editor-md-heading3,
+.toastui-editor-md-heading4,
+.toastui-editor-md-heading5,
+.toastui-editor-defaultUI .ProseMirror {
+  height: 100%;
+  font-size: 18px;
+  padding: 5px 0;
+}
+
+.toastui-editor-defaultUI .ProseMirror { width: calc(100% - 76px); }
 .toastui-editor-contents .toastui-editor-md-preview-highlight:after {
   background-color: transparent!important;
+  padding: 5px 25px 5px 0!important;
+}
+
+.ProseMirror::-webkit-scrollbar,
+.toastui-editor-md-preview::-webkit-scrollbar {
+  width: 10px;
+}
+.ProseMirror::-webkit-scrollbar-button,
+.toastui-editor-md-preview::-webkit-scrollbar-button {
+  display: none;
+}
+.ProseMirror::-webkit-scrollbar-track { background-color: var(--editor-editor-left); }
+.toastui-editor-md-preview::-webkit-scrollbar-track { background-color: var(--editor-preview-bg); }
+.ProseMirror::-webkit-scrollbar-thumb,
+.toastui-editor-md-preview::-webkit-scrollbar-thumb {
+  background: var(--editor-border-color);
 }
 
 .toastui-editor-defaultUI-toolbar *,
 .toastui-editor-md-container .toastui-editor,
 .toastui-editor-main .toastui-editor-md-splitter,
 .toastui-editor-md-container .toastui-editor-md-preview { transition: all .2s ease; }
+
+.editor-line-number {
+  width: 76px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 7px 18px 5px 0;
+}
+.editor-line-number::-webkit-scrollbar {
+  display: none;
+}
+.editor-line-number .line-item {
+  cursor: default;
+  height: 27px;
+  color: #6e7681;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  font-size: 18px;
+  font-family: "Cascadia Code", "PingFang SC", Consolas, "Courier New", monospace, Consolas, "Courier New", monospace;
+}
 </style>
