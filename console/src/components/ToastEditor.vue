@@ -1,0 +1,358 @@
+<template>
+  <section :data-theme="currentTheme" class="toast-wrapper">
+    <div id="toast-editor"></div>
+    <div class="toolbar-stat-panel">
+      <div class="stat-head">
+        <i class="fa-solid fa-code"></i>
+      </div>
+      <div class="stat-panel">
+        <div class="stat-panel--left">
+          <span class="stat-panel--key">
+            <i class="fa-solid fa-language"></i> Markdown
+          </span>
+        </div>
+        <div class="stat-panel--right">
+          <span class="stat-panel--key">
+            <i class="fa-solid fa-code"></i> Markdown
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script lang="ts" setup>
+import { onMounted, ref } from "vue";
+import Editor from "@toast-ui/editor";
+
+// 编辑器主题
+function getTheme(): string {
+  let theme = localStorage.getItem('editor-theme');
+  if (!theme) {
+    theme = 'light';
+    localStorage.setItem('editor-theme', theme);
+  }
+  return theme;
+}
+
+const currentTheme = ref(getTheme());
+const props = defineProps({
+  raw: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  content: {
+    type: String,
+    required: false,
+    default: "",
+  },
+});
+
+const emit = defineEmits<{
+  (event: "update:raw", value: string): void;
+  (event: "update:content", value: string): void;
+  (event: "update", value: string): void;
+}>();
+
+onMounted(async () => {
+  // 初始化Toast编辑器
+  const instance: Editor = new Editor({
+    el: document.querySelector('#toast-editor')!,
+    previewStyle: 'vertical',
+    height: 'calc(100% - 30px)',
+    placeholder: '请输入内容...',
+    hideModeSwitch: true,
+    toolbarItems: [
+      [
+        {
+          name: 'tool-head',
+          tooltip: '标题',
+          command: 'bold',
+          className: 'fa-solid fa-heading',
+          state: 'heading',
+        },
+        {
+          name: 'tool-bold',
+          tooltip: '加粗',
+          command: 'bold',
+          className: 'fa-solid fa-bold',
+          state: 'strong',
+        },
+        {
+          name: 'tool-italic',
+          tooltip: '斜体',
+          command: 'italic',
+          className: 'fa-solid fa-italic',
+          state: 'emph',
+        },
+        {
+          name: 'tool-strike',
+          tooltip: '删除线',
+          command: 'strike',
+          className: 'fa-solid fa-strikethrough',
+          state: 'strike',
+        },
+        {
+          name: 'tool-li',
+          tooltip: '无序列表',
+          command: 'bulletList',
+          className: 'fa-solid fa-list-ul',
+          state: 'bulletList',
+        },
+        {
+          name: 'tool-ol',
+          tooltip: '有序列表',
+          command: 'orderedList',
+          className: 'fa-solid fa-list-ol',
+          state: 'orderedList',
+        },
+        {
+          name: 'tool-task',
+          tooltip: '任务列表',
+          command: 'taskList',
+          className: 'fa-regular fa-square-check',
+          state: 'taskList',
+        },
+        {
+          name: 'tool-quote',
+          tooltip: '引用',
+          command: 'blockQuote',
+          className: 'fa-solid fa-quote-left',
+          state: 'blockQuote',
+        },
+        {
+          name: 'tool-code',
+          tooltip: '行内代码',
+          command: 'code',
+          className: 'fa-solid fa-code',
+          state: 'code',
+        },
+        {
+          name: 'tool-codeBlock',
+          tooltip: '代码块',
+          command: 'codeBlock',
+          className: 'fa-solid fa-laptop-code',
+          state: 'codeBlock',
+        },
+        {
+          name: 'tool-table',
+          tooltip: '表格',
+          className: 'fa-solid fa-table',
+          state: 'table',
+        },
+        {
+          name: 'tool-link',
+          tooltip: '链接',
+          className: 'fa-solid fa-link',
+        },
+        {
+          name: 'tool-image',
+          tooltip: '图片',
+          className: 'fa-solid fa-image',
+        },
+      ],
+    ],
+  });
+
+  function updateToolbarItem(theme: string) {
+    instance.removeToolbarItem(`tool-theme-${theme === 'light' ? 'moon' : 'day'}`);
+    instance.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
+      name: `tool-theme-${theme === 'light' ? 'day' : 'moon'}`,
+      tooltip: `切换至${theme === 'light' ? '夜间' : '白天'}`,
+      command: 'switchTheme',
+      className: `fa-solid fa-${theme === 'light' ? 'sun' : 'moon'}`,
+    });
+  }
+
+  function switchTheme(): boolean {
+    const editorDiv = document.getElementById('toast-editor');
+    if (editorDiv) {
+      const newTheme = getTheme() === 'light' ? 'night' : 'light';
+      currentTheme.value = newTheme;
+      localStorage.setItem('editor-theme', newTheme);
+      updateToolbarItem(newTheme);
+      return true;
+    }
+    return false;
+  }
+
+  updateToolbarItem(getTheme());
+  instance.addCommand('markdown', 'switchTheme', () => switchTheme());
+  // 恢复缓存
+  instance.setMarkdown(props.raw);
+  // 监听文本变化
+  instance.on('change', () => {
+    const markdown = instance.getMarkdown();
+    emit('update:raw', markdown);
+    emit('update:content', markdown);
+    if (markdown !== props.raw) {
+      emit("update", markdown);
+    }
+    console.log("update:raw -> \n" + instance.getMarkdown());
+  });
+  
+});
+</script>
+
+<style>
+@import "@toast-ui/editor/dist/toastui-editor.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+[data-theme="light"] {
+  --editor-toolbar-main: #fff;
+  --editor-toolbar-bg: #2c2c2c;
+  --editor-toolbar-btn: rgb(185,185,185);
+  --editor-toolbar-btn-hover: rgb(66,66,66);
+  --editor-editor-left: #fff;
+  --editor-preview-bg: rgb(243,243,243);
+  --editor-border-color: #ebedf2;
+  --display-p: #222;
+  --display-quoto: rgba(0,0,0,.05);
+  --display-border: #eaedf0;
+
+  --editor-panel-bg: #fff;
+}
+
+[data-theme="night"] {
+  --editor-toolbar-main: #fff;
+  --editor-toolbar-bg: rgb(24,24,24);
+  --editor-toolbar-btn: rgb(185,185,185);
+  --editor-toolbar-btn-hover: rgb(66,66,66);
+  --editor-editor-left: rgb(31,31,31);
+  --editor-preview-bg: rgb(24,24,24);
+  --editor-border-color: rgb(38,38,38);
+  --display-p: rgb(204,204,204);
+  --display-quoto: rgba(110, 118, 129, 0.4);
+  --display-border: #2c3135;
+
+  --editor-panel-bg: rgb(24,24,24);
+}
+
+.toolbar-stat-panel {
+  display: flex;
+  height: 30px;
+  overflow: hidden;
+  align-items: center;
+}
+.stat-head { 
+  color: var(--editor-toolbar-main); 
+  padding: 0 13px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  background: #007acc; 
+}
+.stat-panel {
+  color: var(--display-p);
+  display: flex;
+  height: 30px;
+  width: 100%;
+  font-size: 15px;
+  overflow: hidden;
+  padding: 0 25px 0 10px;
+  align-items: center;
+  background: var(--editor-panel-bg);
+  border-top: 2px solid var(--editor-border-color);
+}
+.stat-panel--left { justify-content: start; }
+.stat-panel--right { justify-content: end; }
+.stat-panel--right, .stat-panel--left { flex: 1; display: flex; }
+
+.toastui-editor-md-preview .toastui-editor-contents h1 { 
+  font-size: 2.3rem; 
+  border-bottom: 1px solid var(--display-border)!important;
+}
+.toastui-editor-md-preview .toastui-editor-contents h2 { 
+  font-size: 2rem; 
+  border-bottom: 1px solid var(--display-border)!important; 
+}
+.toastui-editor-md-preview .toastui-editor-contents h3 { font-size: 1.7rem; border: none!important; }
+.toastui-editor-md-preview .toastui-editor-contents h4 { font-size: 1.6rem; border: none!important; }
+.toastui-editor-md-preview .toastui-editor-contents h5 { font-size: 1.3rem; border: none!important; }
+.toastui-editor-md-preview .toastui-editor-contents h6 { font-size: 1.0rem; border: none!important; }
+
+.toastui-editor-contents code,
+.toastui-editor-contents pre,
+.toastui-editor-md-preview .toastui-editor-contents blockquote {
+  border-radius: 3px;
+  background: var(--display-quoto);
+}
+.toastui-editor-md-code-block-line-background,
+.toastui-editor-md-code.toastui-editor-md-marked-text,
+.toastui-editor-md-code {
+  background: none!important;
+}
+
+.toastui-editor-md-preview .toastui-editor-contents blockquote,
+.toastui-editor-contents pre {
+  padding: .8rem .8rem .6rem .8rem;
+}
+.toastui-editor-md-preview .toastui-editor-contents blockquote { border: none!important; }
+.ProseMirror,
+.toastui-editor-contents p,
+.toastui-editor-md-preview .toastui-editor-contents blockquote,
+.toastui-editor-md-block-quote .toastui-editor-md-marked-text, 
+.toastui-editor-md-list-item .toastui-editor-md-meta,
+.toastui-editor-md-preview .toastui-editor-contents h1,
+.toastui-editor-md-preview .toastui-editor-contents h2,
+.toastui-editor-md-preview .toastui-editor-contents h3,
+.toastui-editor-md-preview .toastui-editor-contents h4,
+.toastui-editor-md-preview .toastui-editor-contents h5,
+.toastui-editor-md-preview .toastui-editor-contents h6,
+.toastui-editor-contents code,
+.toastui-editor-md-code.toastui-editor-md-marked-text { 
+  color: var(--display-p);
+  letter-spacing: 1px;
+}
+.toastui-editor-main .toastui-editor-md-splitter { 
+  background-color: var(--editor-border-color)!important;
+  width: 2px;
+}
+.toastui-editor-toolbar { height: 47px!important; }
+.toastui-editor-defaultUI { border: none!important; }
+.toastui-editor-defaultUI-toolbar {
+  background: var(--editor-toolbar-bg);
+  font-size: 16px;
+  border-radius: 0!important;
+  padding: 1px 15px!important;
+  height: 47px!important;
+  border-bottom: 2px solid var(--editor-border-color)!important;
+}
+
+.toastui-editor-toolbar-group-tail { display: flex; }
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-group { flex-grow: 1; }
+.toastui-editor-defaultUI-toolbar button {
+  color: var(--editor-toolbar-btn);
+  border: none!important;
+}
+.toastui-editor-defaultUI-toolbar button.fa-solid.fa-moon,
+.toastui-editor-defaultUI-toolbar button.fa-solid.fa-sun {
+  background: #007acc;
+  color: #fff;
+}
+
+.toastui-editor-defaultUI-toolbar button:not(:disabled):hover {
+  color: var(--editor-toolbar-main);
+  background-color: var(--editor-toolbar-btn-hover);
+  border: none!important;
+}
+
+.toastui-editor-md-container .toastui-editor { background: var(--editor-editor-left); }
+.toastui-editor-md-container .toastui-editor-md-preview { 
+  color: var(--display-p);
+  background: var(--editor-preview-bg);
+}
+
+.toastui-editor-contents .task-list-item:before { top: 4px; }
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents,
+.toastui-editor-defaultUI .ProseMirror { font-size: 18px; }
+.toastui-editor-contents .toastui-editor-md-preview-highlight:after {
+  background-color: transparent!important;
+}
+
+.toastui-editor-defaultUI-toolbar *,
+.toastui-editor-md-container .toastui-editor,
+.toastui-editor-main .toastui-editor-md-splitter,
+.toastui-editor-md-container .toastui-editor-md-preview { transition: all .2s ease; }
+</style>

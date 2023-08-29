@@ -128,6 +128,124 @@ spec:
               label: 标签前缀
               placeholder: "请输入标签的前缀"
               validation: required
+        - $formkit: group
+          name: prism
+          label: "代码高亮"
+          value:
+            lineNumber:
+            customCss:
+            css:
+          children:
+            - $formkit: radio
+              name: lineNumber
+              label: 代码块显示行号
+              value: true
+              options:
+                - label: 开启
+                  value: true
+                - label: 关闭
+                  value: false
+            - $formkit: url
+              name: customCss
+              validation: "url"
+              label: 自定义 prism 主题
+              placeholder: 请输入自定义 prism.css 地址
+            - $formkit: select
+              name: css
+              label: 代码块高亮主题
+              value: "prism-default.css"
+              help: "prism 支持自定义主题 css，当配置自定义主题时，内置主题将不会生效"
+              options:
+                - value: "prism-default.css"
+                  label: "prism-default.css"
+                - value: "prism-a11y-dark.css"
+                  label: "prism-a11y-dark.css"
+                - value: "prism-atom-dark.css"
+                  label: "prism-atom-dark.css"
+                - value: "prism-base16-ateliersulphurpool.light.css"
+                  label: "prism-base16-ateliersulphurpool.light.css"
+                - value: "prism-cb.css"
+                  label: "prism-cb.css"
+                - value: "prism-coldark-cold.css"
+                  label: "prism-coldark-cold.css"
+                - value: "prism-coldark-dark.css"
+                  label: "prism-coldark-dark.css"
+                - value: "prism-coy.css"
+                  label: "prism-coy.css"
+                - value: "prism-coy-without-shadows.css"
+                  label: "prism-coy-without-shadows.css"
+                - value: "prism-dark.css"
+                  label: "prism-dark.css"
+                - value: "prism-darcula.css"
+                  label: "prism-darcula.css"
+                - value: "prism-dracula.css"
+                  label: "prism-dracula.css"
+                - value: "prism-duotone-dark.css"
+                  label: "prism-duotone-dark.css"
+                - value: "prism-duotone-earth.css"
+                  label: "prism-duotone-earth.css"
+                - value: "prism-duotone-forest.css"
+                  label: "prism-duotone-forest.css"
+                - value: "prism-duotone-light.css"
+                  label: "prism-duotone-light.css"
+                - value: "prism-duotone-sea.css"
+                  label: "prism-duotone-sea.css"
+                - value: "prism-duotone-space.css"
+                  label: "prism-duotone-space.css"
+                - value: "prism-funcky.css"
+                  label: "prism-funcky.css"
+                - value: "prism-ghcolors.css"
+                  label: "prism-ghcolors.css"
+                - value: "prism-gruvbox-dark.css"
+                  label: "prism-gruvbox-dark.css"
+                - value: "prism-gruvbox-light.css"
+                  label: "prism-gruvbox-light.css"
+                - value: "prism-holi-theme.css"
+                  label: "prism-holi-theme.css"
+                - value: "prism-hopscotch.css"
+                  label: "prism-hopscotch.css"
+                - value: "prism-laserwave.css"
+                  label: "prism-laserwave.css"
+                - value: "prism-lucario.css"
+                  label: "prism-lucario.css"
+                - value: "prism-material-dark.css"
+                  label: "prism-material-dark.css"
+                - value: "prism-material-light.css"
+                  label: "prism-material-light.css"
+                - value: "prism-material-oceanic.css"
+                  label: "prism-material-oceanic.css"
+                - value: "prism-night-owl.css"
+                  label: "prism-night-owl.css"
+                - value: "prism-nord.css"
+                  label: "prism-nord.css"
+                - value: "prism-one-dark.css"
+                  label: "prism-one-dark.css"
+                - value: "prism-one-light.css"
+                  label: "prism-one-light.css"
+                - value: "prism-okaidia.css"
+                  label: "prism-okaidia.css"
+                - value: "prism-pojoaque.css"
+                  label: "prism-pojoaque.css"
+                - value: "prism-shades-of-purple.css"
+                  label: "prism-shades-of-purple.css"
+                - value: "prism-solarized-light.css"
+                  label: "prism-solarized-light.css"
+                - value: "prism-solarized-dark-atom.css"
+                  label: "prism-solarized-dark-atom.css"
+                - value: "prism-synthwave84.css"
+                  label: "prism-synthwave84.css"
+                - value: "prism-tomorrow-night.css"
+                  label: "prism-tomorrow-night.css"
+                - value: "prism-twilight.css"
+                  label: "prism-twilight.css"
+                - value: "prism-vs.css"
+                  label: "prism-vs.css"
+                - value: "prism-vsc-dark-plus.css"
+                  label: "prism-vsc-dark-plus.css"
+                - value: "prism-xonokai.css"
+                  label: "prism-xonokai.css"
+                - value: "prism-z-touch.css"
+                  label: "prism-z-touch.css"
         - $formkit: radio
           name: antvG2
           id: antvG2

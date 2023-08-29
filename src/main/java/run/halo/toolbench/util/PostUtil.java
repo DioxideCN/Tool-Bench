@@ -36,7 +36,6 @@ public class PostUtil {
     }
 
     private static String fixElementTag(String content, Set<String> elemPrefixes) {
-        log.info("raw -> " + content);
         String result = content;
         for (String prefix : elemPrefixes) {
             StringBuilder sb = new StringBuilder();

@@ -30,7 +30,14 @@ public class DomBuilder {
     // 构建 style
     public DomBuilder style(String href) {
         // 直接形成style标签
-        DOM_LIST.add(STYLE_HEAD + handlePath(href) + "\"" + STYLE_END);
+        return style(href, true);
+    }
+
+    public DomBuilder style(String href, boolean trigger) {
+        // 根据条件形成style标签
+        if (trigger) {
+            DOM_LIST.add(STYLE_HEAD + handlePath(href) + "\"" + STYLE_END);
+        }
         return this;
     }
 

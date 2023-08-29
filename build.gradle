@@ -1,4 +1,5 @@
 plugins {
+    id "com.github.node-gradle.node" version "3.3.0"
     id "run.halo.plugin.devtools" version "0.0.5"
     id "io.freefair.lombok" version "8.0.0-rc2"
     id 'java'
@@ -28,6 +29,25 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+node {
+    nodeProjectDir = file("${project.projectDir}/console")
+}
+
+tasks.register('pnpmInstall', NpxTask) {
+    command = "pnpm@7"
+    args = ["install"]
+}
+
+tasks.register('buildFrontend', NpxTask) {
+    command = 'pnpm@7'
+    args = ['build']
+    dependsOn(pnpmInstall)
+}
+
+build {
+    tasks.getByName('compileJava').dependsOn('buildFrontend')
 }
 
 tasks.withType(JavaCompile).configureEach {

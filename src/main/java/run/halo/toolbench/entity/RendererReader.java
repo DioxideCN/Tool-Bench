@@ -20,5 +20,6 @@ public class RendererReader {
     Boolean antvX6;
     LinkedHashMap<String, String> codeHead;
     LinkedHashMap<String, String> codeTail;
+    LinkedHashMap<String, String> prism;
     List<LinkedHashMap<String, String>> customElementPrefix;
 }
