@@ -1,6 +1,6 @@
 export const PopupBuilder = {
     /**
-     * 构造弹出框
+     * 构造弹出框DOM
      * @param title 标题
      * @param closeAction 关闭事件
      * @param domArr 内部dom组

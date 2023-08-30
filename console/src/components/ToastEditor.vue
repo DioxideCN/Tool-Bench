@@ -3,17 +3,23 @@
     <div id="toast-editor"></div>
     <div class="toolbar-stat-panel">
       <div class="stat-head">
-        <i class="fa-solid fa-code"></i>
+        <i class="fa-solid fa-plug"></i>
       </div>
       <div class="stat-panel">
         <div class="stat-panel--left">
-          <span class="stat-panel--key">
-            <i class="fa-solid fa-language"></i> Markdown
-          </span>
         </div>
         <div class="stat-panel--right">
           <span class="stat-panel--key">
-            <i class="fa-solid fa-code"></i> Markdown
+            {{ wordCount }} 字词&nbsp;&nbsp;{{ characterCount }} 字符
+          </span>
+          <span class="stat-panel--key">
+            <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-terminal"></i>Markdown
+          </span>
+          <span class="stat-panel--key" @click="switchPreview()">
+            <i class="fa-solid" style="margin-right: 0;" :class="previewEnable?'fa-eye':'fa-eye-slash'"></i>
+          </span>
+          <span class="stat-panel--key last">
+            <a href="https://github.com/DioxideCN/Tool-Bench" target="_blank"><i class="fa-brands fa-github"></i></a>
           </span>
         </div>
       </div>
@@ -24,7 +30,8 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import Editor from "@toast-ui/editor";
-import { PopupBuilder } from "../util/PopupBuilder";
+import { PopupBuilder } from "@/util/PopupBuilder";
+import { ContextUtil } from "@/util/ContextUtil";
 
 // 编辑器主题
 function getTheme(): string {
@@ -36,6 +43,9 @@ function getTheme(): string {
   return theme;
 }
 
+const previewEnable = ref(true);
+const wordCount = ref(0); // 词数
+const characterCount = ref(0); // 字符数
 const currentTheme = ref(getTheme());
 const props = defineProps({
   raw: {
@@ -49,6 +59,20 @@ const props = defineProps({
     default: "",
   },
 });
+
+function switchPreview() {
+  previewEnable.value = !previewEnable.value;
+  const previewArea: any = document.getElementsByClassName('toastui-editor-md-preview')[0];
+  const splitArea: any = document.getElementsByClassName('toastui-editor-md-splitter')[0];
+  const editArea: any = document.getElementsByClassName('toastui-editor md-mode')[0];
+  if (previewArea && splitArea && editArea) {
+    const trigger: boolean = previewEnable.value;
+    const displayWhat: string = trigger ? '' : 'none';
+    previewArea.style.display = displayWhat;
+    splitArea.style.display = displayWhat;
+    editArea.style.width = trigger ? '50%' : '100%';
+  }
+}
 
 const emit = defineEmits<{
   (event: "update:raw", value: string): void;
@@ -66,6 +90,7 @@ onMounted(async () => {
     height: 'calc(100% - 30px)',
     placeholder: '请输入内容...',
     hideModeSwitch: true,
+    previewHighlight: false,
     toolbarItems: [
       [
         {
@@ -226,10 +251,15 @@ onMounted(async () => {
   function updateLineNumber(val: number,
                             markMap: Map<number, number>): void {
     const fragment = document.createDocumentFragment();
+    const highlightRowNum = highlightLine();
     for (let i = 0; i < val; i++) {
       const newLineItem = document.createElement("div");
       newLineItem.className = "line-item";
-      newLineItem.textContent = (i+1).toString();
+      newLineItem.dataset.row = (i + 1).toString();
+      if (highlightRowNum === i + 1) { // 高亮聚焦的行
+        newLineItem.classList.add('line-highlight')
+      }
+      newLineItem.textContent = (i + 1).toString();
       fragment.appendChild(newLineItem);
       if (markMap.has(i)) {
         const count = markMap.get(i)!;
@@ -257,14 +287,28 @@ onMounted(async () => {
       }
     })
     if (JSON.stringify(Array.from(indexMap)) !== JSON.stringify(Array.from(prevIndexMap)) || lineNumber !== currLineNumber) {
-      updateLineNumber(currLineNumber, indexMap);
+      updateLineNumber(currLineNumber, indexMap); // 更新行容器
       prevIndexMap = indexMap;
       lineNumber = currLineNumber;
+    } else {
+      // 更新聚焦行
+      const lineNumber: number = highlightLine();
+      if (lineNumber !== -1) {
+        const divs = document.querySelectorAll('div[data-row]');
+        divs.forEach((div) => {
+          const dataRow: string = div.getAttribute('data-row')!;
+          if (dataRow === lineNumber.toString()) {
+            div.classList.add('line-highlight');
+          } else {
+            div.classList.remove('line-highlight');
+          }
+        });
+      }
     }
   }, 10);
   countLines();
   
-  // 监听文本变化
+  // 更新文本
   function updateContext(): void {
     const markdown = instance.getMarkdown();
     if (props.raw !== markdown) {
@@ -273,14 +317,28 @@ onMounted(async () => {
       emit("update", markdown);
     }
   }
-  const _interval = setInterval(() => {
+  
+  instance.on('caretChange', () => {
+    const { _wordCount, _characterCount } = ContextUtil.countWord(instance.getMarkdown());
+    wordCount.value = _wordCount;
+    characterCount.value = _characterCount;
     countLines();
     updateContext();
-    if (!document.querySelector('#toast-editor')) {
-      clearInterval(_interval);
+  });
+  
+  function highlightLine(): number {
+    const selection = window.getSelection();
+    if (!selection) return -1;
+    let someNode = selection.anchorNode;
+    if (!someNode) return -1;
+    if (someNode.nodeType === 3) {
+      someNode = someNode.parentNode;
     }
-  }, 10);
-
+    if (!someNode) return -1;
+    const parentNode = someNode.parentNode;
+    if (!parentNode) return -1;
+    return Array.prototype.indexOf.call(parentNode.childNodes, someNode) + 1;
+  }
 });
 </script>
 
