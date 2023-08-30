@@ -7,8 +7,10 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import lombok.extern.slf4j.Slf4j;
+import run.halo.toolbench.infra.CustomHeadingRenderer;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +32,12 @@ public class PostUtil {
         options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
         options.set(HtmlRenderer.FENCED_CODE_LANGUAGE_CLASS_PREFIX, "prism language-");
         Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+        HtmlRenderer renderer = HtmlRenderer
+                .builder(options)
+                .extensions(List.of(
+                        new CustomHeadingRenderer.Factory()
+                ))
+                .build();
         Node document = parser.parse(raw);
         return renderer.render(document);
     }

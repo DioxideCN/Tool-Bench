@@ -110,13 +110,6 @@ onMounted(async () => {
           state: 'orderedList',
         },
         {
-          name: 'tool-task',
-          tooltip: '任务列表',
-          command: 'taskList',
-          className: 'fa-regular fa-square-check',
-          state: 'taskList',
-        },
-        {
           name: 'tool-quote',
           tooltip: '引用',
           command: 'blockQuote',
@@ -214,7 +207,7 @@ onMounted(async () => {
       newLineItem.textContent = (i+1).toString();
       fragment.appendChild(newLineItem);
       if (markMap.has(i)) {
-        const count = markMap.get(i)!; // 确保有值
+        const count = markMap.get(i)!;
         for (let j = 0; j < count; j++) {
           const indentLineItem = document.createElement("div");
           indentLineItem.className = "line-item";
@@ -246,20 +239,12 @@ onMounted(async () => {
   }, 10);
   countLines();
   
-  // 互相绑定滚动事件
-  mdEditor.addEventListener("scroll", function() {
-    lineNumberDOM.scrollTop = mdEditor.scrollTop;
-  });
-  lineNumberDOM.addEventListener("scroll", function() {
-    mdEditor.scrollTop = lineNumberDOM.scrollTop;
-  });
-  
   // 监听文本变化
   function updateContext(): void {
     const markdown = instance.getMarkdown();
-    emit('update:raw', markdown);
-    emit('update:content', markdown);
-    if (markdown !== props.raw) {
+    if (props.raw !== markdown) {
+      emit('update:raw', markdown);
+      emit('update:content', markdown);
       emit("update", markdown);
     }
   }
@@ -270,6 +255,7 @@ onMounted(async () => {
       clearInterval(_interval);
     }
   }, 10);
+
 });
 </script>
 
@@ -289,6 +275,7 @@ onMounted(async () => {
   --display-quoto: rgba(0,0,0,.05);
   --display-border: #eaedf0;
   --editor-panel-bg: #fff;
+  --default-highlight: rgb(173,214,255);
 }
 
 [data-theme="night"] {
@@ -303,6 +290,7 @@ onMounted(async () => {
   --display-quoto: rgba(110, 118, 129, 0.4);
   --display-border: #2c3135;
   --editor-panel-bg: rgb(24,24,24);
+  --default-highlight: rgb(38,79,120);
 }
 
 .toolbar-stat-panel {
@@ -377,6 +365,7 @@ onMounted(async () => {
 .toastui-editor-md-preview .toastui-editor-contents h5,
 .toastui-editor-md-preview .toastui-editor-contents h6,
 .toastui-editor-contents code,
+.toastui-editor-md-table .toastui-editor-md-table-cell,
 .toastui-editor-md-code.toastui-editor-md-marked-text { 
   color: var(--display-p);
   letter-spacing: 1px;
@@ -430,7 +419,15 @@ onMounted(async () => {
 .toastui-editor-defaultUI .ProseMirror {
   height: 100%;
   font-size: 18px;
-  padding: 5px 0;
+  padding: 5px 10px 5px 0;
+  overflow-y: unset;
+  overflow-X: unset;
+}
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents {
+  white-space: nowrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  padding: 5px 0!important;
 }
 
 .toastui-editor-defaultUI .ProseMirror { width: calc(100% - 76px); }
@@ -439,17 +436,17 @@ onMounted(async () => {
   padding: 5px 25px 5px 0!important;
 }
 
-.ProseMirror::-webkit-scrollbar,
+.toastui-editor-md-container .toastui-editor::-webkit-scrollbar,
 .toastui-editor-md-preview::-webkit-scrollbar {
   width: 10px;
 }
-.ProseMirror::-webkit-scrollbar-button,
+.toastui-editor-md-container .toastui-editor::-webkit-scrollbar-button,
 .toastui-editor-md-preview::-webkit-scrollbar-button {
   display: none;
 }
-.ProseMirror::-webkit-scrollbar-track { background-color: var(--editor-editor-left); }
+.toastui-editor-md-container .toastui-editor::-webkit-scrollbar-track { background-color: var(--editor-editor-left); }
 .toastui-editor-md-preview::-webkit-scrollbar-track { background-color: var(--editor-preview-bg); }
-.ProseMirror::-webkit-scrollbar-thumb,
+.toastui-editor-md-container .toastui-editor::-webkit-scrollbar-thumb,
 .toastui-editor-md-preview::-webkit-scrollbar-thumb {
   background: var(--editor-border-color);
 }
@@ -458,13 +455,14 @@ onMounted(async () => {
 .toastui-editor-md-container .toastui-editor,
 .toastui-editor-main .toastui-editor-md-splitter,
 .toastui-editor-md-container .toastui-editor-md-preview { transition: all .2s ease; }
-
+.toastui-editor-md-container .toastui-editor {
+  overflow-y: auto;
+  overflow-X: hidden;
+}
 .editor-line-number {
   width: 76px;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 7px 18px 5px 0;
+  padding: 5px 18px 5px 0;
 }
 .editor-line-number::-webkit-scrollbar {
   display: none;
@@ -478,5 +476,75 @@ onMounted(async () => {
   justify-content: end;
   font-size: 18px;
   font-family: "Cascadia Code", "PingFang SC", Consolas, "Courier New", monospace, Consolas, "Courier New", monospace;
+}
+
+.toastui-editor-md-code-block-line-background.start, .toastui-editor-md-custom-block-line-background.start {
+  margin-top: 0!important;
+}
+
+.toastui-editor-contents ul>li:before { margin-top: 12px; }
+
+.toastui-editor-md-preview .toastui-editor-contents h1,
+.toastui-editor-md-preview .toastui-editor-contents h2,
+.toastui-editor-md-preview .toastui-editor-contents h3,
+.toastui-editor-md-preview .toastui-editor-contents h4,
+.toastui-editor-md-preview .toastui-editor-contents h5,
+.toastui-editor-md-preview .toastui-editor-contents h6 {
+  padding: 20px 0 0;
+  margin: 0;
+  line-height: 1.3;
+}
+.toastui-editor-contents p { line-height: 1.6; text-wrap: initial; }
+.toastui-editor-contents blockquote,
+.toastui-editor-contents pre,
+.toastui-editor-contents p,
+.toastui-editor-contents ol,
+.toastui-editor-contents ul {
+  margin: 1rem 0 0;
+}
+
+.toastui-editor-contents table {
+  color: var(--display-p);
+  font-size: 15px;
+  margin: 1.5rem 0 0;
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  word-wrap: normal;
+  border: none;
+}
+.toastui-editor-contents table thead th {
+  color: var(--display-p);
+  padding: .5rem;
+  border: none;
+  border-bottom: 2px solid var(--display-quoto);
+  border-top: none;
+  height: fit-content;
+  background: transparent;
+  font-weight: bold;
+}
+.toastui-editor-contents table tbody tr td {
+  color: var(--display-p);
+  width: 999px;
+  padding: .5rem;
+  text-align: left;
+  height: fit-content;
+  vertical-align: top;
+  border: none;
+  border-bottom: 1px solid var(--display-quoto);
+  border-top: 1px solid var(--display-quoto);
+  background: transparent;
+}
+.toastui-editor-contents table+* { margin-top: 2rem; }
+.toastui-editor-contents table tbody tr td p {
+  margin: 3px 0 0;
+  text-align: left;
+  line-height: 1.6;
+  font-size: 16px;
+}
+.toastui-editor-contents th.toastui-editor-md-preview-highlight, 
+.toastui-editor-contents td.toastui-editor-md-preview-highlight {
+  color: var(--display-p);
+  background-color: var(--default-highlight);
 }
 </style>
