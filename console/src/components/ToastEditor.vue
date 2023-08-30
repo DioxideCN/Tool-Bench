@@ -10,7 +10,10 @@
         </div>
         <div class="stat-panel--right">
           <span class="stat-panel--key">
-            {{ wordCount }} 字词&nbsp;&nbsp;{{ characterCount }} 字符
+            行 {{ focusRow }}
+          </span>
+          <span class="stat-panel--key">
+            字词 {{ wordCount }}, 字符 {{ characterCount }}
           </span>
           <span class="stat-panel--key">
             <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-terminal"></i>Markdown
@@ -46,6 +49,7 @@ function getTheme(): string {
 const previewEnable = ref(true);
 const wordCount = ref(0); // 词数
 const characterCount = ref(0); // 字符数
+const focusRow = ref(1); // 聚焦行数
 const currentTheme = ref(getTheme());
 const props = defineProps({
   raw: {
@@ -331,14 +335,29 @@ onMounted(async () => {
     if (!selection) return -1;
     let someNode = selection.anchorNode;
     if (!someNode) return -1;
-    if (someNode.nodeType === 3) {
+
+    // @ts-ignore
+    // 向上遍历DOM树，直到父DOM包含ProseMirror
+    while (someNode && !someNode.parentNode?.classList?.contains('ProseMirror')) {
       someNode = someNode.parentNode;
     }
     if (!someNode) return -1;
     const parentNode = someNode.parentNode;
     if (!parentNode) return -1;
-    return Array.prototype.indexOf.call(parentNode.childNodes, someNode) + 1;
+    focusRow.value = Array.prototype.indexOf.call(parentNode.childNodes, someNode) + 1;
+    return focusRow.value;
   }
+  
+  // 监听内容区域的宽度变化
+  window.addEventListener('resize', countLines())
+  const resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      if (entry.contentRect.width !== entry.target.clientWidth) {
+        countLines();
+      }
+    }
+  });
+  resizeObserver.observe(mdEditor);
 });
 </script>
 
