@@ -16,7 +16,7 @@
         </div>
         <div class="stat-panel--right">
           <span class="stat-panel--key">
-            行 {{ focusRow }}{{ selectCount ? ` (已选择${selectCount})` : '' }}
+            行 {{ focusRow }}, 列 {{ focusCol }}{{ selectCount ? ` (已选择${selectCount})` : '' }}
           </span>
           <span class="stat-panel--key">
             字词 {{ wordCount }}, 字符 {{ characterCount }}
@@ -58,6 +58,7 @@ const wordCount = ref(0);        // 词数
 const characterCount = ref(0);   // 字符数
 const selectCount = ref(0);      // 已选择
 const focusRow = ref(1);         // 聚焦行数
+const focusCol = ref(1);         // 聚焦列数
 const currentTheme = ref(getTheme());
 const props = defineProps({
   raw: {
@@ -261,7 +262,6 @@ onMounted(async () => {
   function insertEmoji(emoji: string): boolean {
     if (emoji) {
       const [start, end] = instance.getSelection();
-      console.log([start, end])
       // @ts-ignore
       instance.replaceSelection(emoji, [start[0], start[0] - emoji.length], end - 1);
     }
@@ -280,13 +280,17 @@ onMounted(async () => {
   lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
   editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
   function useUpdate() {
+    const selection = instance.getSelection();
+    const mdContent = instance.getMarkdown();
     // 更新统计
-    const { _wordCount, _characterCount } = ContextUtil.countWord(instance.getMarkdown());
+    const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
     wordCount.value = _wordCount;
     characterCount.value = _characterCount;
-    selectCount.value = ContextUtil.Line.countSelect(instance.getMarkdown(), instance.getSelection());
+    selectCount.value = ContextUtil.Line.countSelect(mdContent, selection);
+    focusRow.value = (selection as [number[], number[]])[1][0];
+    focusCol.value = (selection as [number[], number[]])[1][1];
     // 更新行
-    const getter = ContextUtil.Line.count(mdEditor, instance.getSelection(), prevIndexMap, oldLineCount);
+    const getter = ContextUtil.Line.count(mdEditor, selection, prevIndexMap, oldLineCount);
     prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
     oldLineCount = getter.oldLineCount; // 更新总行数
     const fragment = getter.newLineContainer; // 更新行容器
