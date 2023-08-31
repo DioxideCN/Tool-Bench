@@ -72,7 +72,7 @@
     background: var(--editor-panel-bg);
     border-top: 2px solid var(--editor-border-color);
 }
-.stat-panel--left { justify-content: start; }
+.stat-panel--left { justify-content: start; height: 28px; }
 .stat-panel--right { justify-content: end; height: 28px; }
 .stat-panel--right, .stat-panel--left { flex: 1; display: flex; }
 .stat-panel--key { cursor: pointer; }

@@ -7,6 +7,12 @@
       </div>
       <div class="stat-panel">
         <div class="stat-panel--left">
+          <span class="stat-panel--key">
+            设置
+          </span>
+          <span class="stat-panel--key" @click="switchAutoSave()">
+            {{ autoSave ? '自动保存' : '手动保存' }}
+          </span>
         </div>
         <div class="stat-panel--right">
           <span class="stat-panel--key">
@@ -46,10 +52,11 @@ function getTheme(): string {
   return theme;
 }
 
-const previewEnable = ref(true);
-const wordCount = ref(0); // 词数
-const characterCount = ref(0); // 字符数
-const focusRow = ref(1); // 聚焦行数
+const previewEnable = ref(true); // 启用预览
+const autoSave = ref(true);      // 自动保存
+const wordCount = ref(0);        // 词数
+const characterCount = ref(0);   // 字符数
+const focusRow = ref(1);         // 聚焦行数
 const currentTheme = ref(getTheme());
 const props = defineProps({
   raw: {
@@ -64,7 +71,10 @@ const props = defineProps({
   },
 });
 
-function switchPreview() {
+function switchAutoSave(): void {
+  autoSave.value = !autoSave.value;
+}
+function switchPreview(): void {
   previewEnable.value = !previewEnable.value;
   const previewArea: any = document.getElementsByClassName('toastui-editor-md-preview')[0];
   const splitArea: any = document.getElementsByClassName('toastui-editor-md-splitter')[0];
@@ -314,11 +324,13 @@ onMounted(async () => {
   
   // 更新文本
   function updateContext(): void {
-    const markdown = instance.getMarkdown();
-    if (props.raw !== markdown) {
-      emit('update:raw', markdown);
-      emit('update:content', markdown);
-      emit("update", markdown);
+    if (autoSave.value) { // 需要自动保存
+      const markdown = instance.getMarkdown();
+      if (props.raw !== markdown) {
+        emit('update:raw', markdown);
+        emit('update:content', markdown);
+        emit("update", markdown);
+      }
     }
   }
   
