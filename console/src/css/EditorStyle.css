@@ -380,3 +380,7 @@ span.stat-panel--key.last { margin-right: -10px; }
 .heading-item:hover {
     padding-left: 8px;
 }
+
+.toastui-editor-toolbar-group button.active {
+    color: #007acc;
+}

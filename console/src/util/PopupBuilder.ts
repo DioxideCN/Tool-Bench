@@ -43,7 +43,7 @@ export const PopupBuilder = {
     
     
     UseRegular: {
-        heading: (level: number, text: string, handler: Function) => {
+        heading: (level: number, text: string, handler: Function): HTMLElement => {
             const div = document.createElement('div');
             div.className = 'heading-item';
             div.dataset.level = level.toString();
@@ -53,5 +53,19 @@ export const PopupBuilder = {
             });
             return div;
         },
+        emoji: (handler: Function, emojiList: string[]): HTMLElement => {
+            const ul = document.createElement('ul');
+            ul.className = 'emoji-list';
+            emojiList.forEach((emoji) => {
+                const li = document.createElement('li');
+                li.className = 'emoji-item';
+                li.textContent = emoji;
+                ul.appendChild(li);
+                li.addEventListener('click', (e) => {
+                    handler(emoji);
+                })
+            });
+            return ul;
+        }
     },
 }

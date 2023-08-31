@@ -16,7 +16,7 @@
         </div>
         <div class="stat-panel--right">
           <span class="stat-panel--key">
-            行 {{ focusRow }}
+            行 {{ focusRow }}{{ selectCount ? ` (已选择${selectCount})` : '' }}
           </span>
           <span class="stat-panel--key">
             字词 {{ wordCount }}, 字符 {{ characterCount }}
@@ -56,6 +56,7 @@ const previewEnable = ref(true); // 启用预览
 const autoSave = ref(true);      // 自动保存
 const wordCount = ref(0);        // 词数
 const characterCount = ref(0);   // 字符数
+const selectCount = ref(0);      // 已选择
 const focusRow = ref(1);         // 聚焦行数
 const currentTheme = ref(getTheme());
 const props = defineProps({
@@ -96,7 +97,7 @@ const emit = defineEmits<{
 
 onMounted(async () => {
   // 初始化Toast编辑器
-  let lineNumber: number = 1;
+  let oldLineCount: number = 1;
   let prevIndexMap = new Map<number, number>();
   const instance: Editor = new Editor({
     el: document.querySelector('#toast-editor')!,
@@ -210,6 +211,28 @@ onMounted(async () => {
           tooltip: '图片',
           className: 'fa-solid fa-image',
         },
+        {
+          name: 'tool-emoji',
+          tooltip: '表情',
+          className: 'fa-solid fa-face-laugh-wink',
+          popup: {
+            body: (() => {
+              function closeCallback() {
+                instance.eventEmitter.emit('closePopup');
+              }
+              const emojiElement = PopupBuilder.UseRegular.emoji(
+                  function callback(emoji: string) {
+                    closeCallback();
+                    insertEmoji(emoji);
+                  },
+                  ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','😘','😗','😙','😚','😋','😛','😝','😜','🤓','😎','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','😢','😭','😤','😠','😡','😳','😱','😨','🤗','🤔','😶','😑','😬','🙄','😯','😴','😷','🤑','😈','🤡','💩','👻','💀','👀','👣','👐','🙌','👏','🤝','👍','👎','👊','✊','🤛','🤜','🤞','✌️','🤘','👌','👈','👉','👆','👇','☝️','✋','🤚','🖐','🖖','👋','🤙','💪','🖕','✍️','🙏']
+              );
+              return PopupBuilder.build('表情', closeCallback, emojiElement);
+            })(),
+            className: 'popup-tool-image',
+            style: {},
+          },
+        },
       ],
     ],
   });
@@ -235,6 +258,16 @@ onMounted(async () => {
     }
     return false;
   }
+  
+  function insertEmoji(emoji: string): boolean {
+    if (emoji) {
+      const [start, end] = instance.getSelection();
+      console.log([start, end])
+      // @ts-ignore
+      instance.replaceSelection(emoji, [start[0], start[0] - emoji.length], end - 1);
+    }
+    return false;
+  }
 
   updateToolbarItem(getTheme());
   instance.addCommand('markdown', 'switchTheme', () => switchTheme());
@@ -248,80 +281,18 @@ onMounted(async () => {
   lineNumberDOM.className = 'editor-line-number';
   lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
   editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
+  function handleLineUpdate() {
+    const getter = ContextUtil.Line.count(mdEditor, prevIndexMap, oldLineCount);
+    prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
+    oldLineCount = getter.oldLineCount; // 更新总行数
+    const fragment = getter.newLineContainer; // 更新行容器
+    if (fragment) {
+      lineNumberDOM.innerHTML = '';
+      lineNumberDOM.appendChild(fragment);
+    }
+  }
+  handleLineUpdate();
 
-  function throttle(fn: Function, delay: number) {
-    let lastCall = 0;
-    return function (...args: any[]) {
-      const now = new Date().getTime();
-      if (now - lastCall < delay) {
-        return;
-      }
-      lastCall = now;
-      return fn(...args);
-    };
-  }
-  
-  // 更新行号
-  function updateLineNumber(val: number,
-                            markMap: Map<number, number>): void {
-    const fragment = document.createDocumentFragment();
-    const highlightRowNum = highlightLine();
-    for (let i = 0; i < val; i++) {
-      const newLineItem = document.createElement("div");
-      newLineItem.className = "line-item";
-      newLineItem.dataset.row = (i + 1).toString();
-      if (highlightRowNum === i + 1) { // 高亮聚焦的行
-        newLineItem.classList.add('line-highlight')
-      }
-      newLineItem.textContent = (i + 1).toString();
-      fragment.appendChild(newLineItem);
-      if (markMap.has(i)) {
-        const count = markMap.get(i)!;
-        for (let j = 0; j < count; j++) {
-          const indentLineItem = document.createElement("div");
-          indentLineItem.className = "line-item";
-          fragment.appendChild(indentLineItem);
-        }
-      }
-    }
-    lineNumberDOM.innerHTML = '';
-    lineNumberDOM.appendChild(fragment);
-  }
-  
-  // 节流行数监听器
-  const countLines = throttle(() => {
-    const indexMap: Map<number, number> = new Map();
-    const currLineNumber: number = mdEditor.childNodes.length;
-    mdEditor.childNodes.forEach((childNode, index) => {
-      // @ts-ignore
-      const height = childNode.clientHeight || childNode.offsetHeight;
-      const tempCounter = Math.ceil(height / 27);
-      if (tempCounter > 1) {
-        indexMap.set(index, tempCounter - 1);
-      }
-    })
-    if (JSON.stringify(Array.from(indexMap)) !== JSON.stringify(Array.from(prevIndexMap)) || lineNumber !== currLineNumber) {
-      updateLineNumber(currLineNumber, indexMap); // 更新行容器
-      prevIndexMap = indexMap;
-      lineNumber = currLineNumber;
-    } else {
-      // 更新聚焦行
-      const lineNumber: number = highlightLine();
-      if (lineNumber !== -1) {
-        const divs = document.querySelectorAll('div[data-row]');
-        divs.forEach((div) => {
-          const dataRow: string = div.getAttribute('data-row')!;
-          if (dataRow === lineNumber.toString()) {
-            div.classList.add('line-highlight');
-          } else {
-            div.classList.remove('line-highlight');
-          }
-        });
-      }
-    }
-  }, 10);
-  countLines();
-  
   // 更新文本
   function updateContext(): void {
     if (autoSave.value) { // 需要自动保存
@@ -338,8 +309,10 @@ onMounted(async () => {
     const { _wordCount, _characterCount } = ContextUtil.countWord(instance.getMarkdown());
     wordCount.value = _wordCount;
     characterCount.value = _characterCount;
-    countLines();
+    handleLineUpdate();
     updateContext();
+    // 计算是否有选择内容
+    const [start, end] = instance.getSelection();
   });
   
   function highlightLine(): number {
@@ -361,11 +334,11 @@ onMounted(async () => {
   }
   
   // 监听内容区域的宽度变化
-  window.addEventListener('resize', countLines())
+  window.addEventListener('resize', () => {handleLineUpdate()})
   const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       if (entry.contentRect.width !== entry.target.clientWidth) {
-        countLines();
+        handleLineUpdate();
       }
     }
   });
@@ -374,7 +347,7 @@ onMounted(async () => {
 </script>
 
 <style>
-@import "@toast-ui/editor/dist/toastui-editor.css";
-@import "@fortawesome/fontawesome-free/css/all.min.css";
-@import "../css/EditorStyle.css";
+  @import "@toast-ui/editor/dist/toastui-editor.css";
+  @import "@fortawesome/fontawesome-free/css/all.min.css";
+  @import "../css/EditorStyle.css";
 </style>
