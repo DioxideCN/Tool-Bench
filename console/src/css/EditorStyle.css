@@ -333,7 +333,8 @@ span.stat-panel--key.last { margin-right: -10px; }
     padding: 8px;
 }
 
-.popup-inner--head {
+.popup-inner--head,
+.popup-tableDiv--display {
     color: var(--display-p);
     font-size: 14px;
     display: flex;
@@ -401,4 +402,17 @@ ul.emoji-list li.emoji-item {
     cursor: pointer;
     display: inline-block;
     padding: 0 5px;
+}
+
+.popup-tableDiv--main { width: fit-content; }
+.popup-tableDiv--main .popup-tableDiv--row { display: flex; }
+.popup-tableDiv--main span.popup-tableDiv--cell.active { background: var(--selection-color); }
+.popup-tableDiv--main span.popup-tableDiv--cell {
+    border: 1px solid var(--display-p);
+    display: block;
+    cursor: pointer;
+    height: 20px;
+    padding: 3px 5px;
+    width: 20px;
+    margin: 1px;
 }

@@ -66,6 +66,65 @@ export const PopupBuilder = {
                 })
             });
             return ul;
-        }
+        },
+        table: (handler: Function) => {
+            const tableDiv = document.createElement('div');
+            tableDiv.className = "popup-tableDiv--main";
+            const headerDiv = document.createElement('div');
+            headerDiv.className = "popup-tableDiv--display";
+            headerDiv.textContent = "插入 1 行 1 列的表格";
+            tableDiv.appendChild(headerDiv);
+            for (let y = 1; y <= 8; y++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = "popup-tableDiv--row";
+                for (let x = 1; x <= 10; x++) {
+                    const cellSpan = document.createElement('span');
+                    cellSpan.className = "popup-tableDiv--cell";
+                    if (x === 1 && y === 1) {
+                        cellSpan.classList.add('active');
+                    }
+                    cellSpan.setAttribute('data-x', x.toString());
+                    cellSpan.setAttribute('data-y', y.toString());
+                    rowDiv.appendChild(cellSpan);
+                    cellSpan.addEventListener('click', () => {
+                        handler(x, y);
+                        // 清除所有 active 类，除了 x=1 和 y=1 的元素
+                        const cells = tableDiv.querySelectorAll('span');
+                        cells.forEach((cell) => {
+                            const cellX = parseInt(cell.getAttribute('data-x')!, 10);
+                            const cellY = parseInt(cell.getAttribute('data-y')!, 10);
+
+                            if (cellX === 1 && cellY === 1) {
+                                cell.classList.add('active');
+                            } else {
+                                cell.classList.remove('active');
+                            }
+                        });
+                        // 更新头部 div 的内容
+                        headerDiv.textContent = "插入 1 行 1 列的表格";
+                    });
+                }
+                tableDiv.appendChild(rowDiv);
+            }
+            tableDiv.addEventListener('mouseover', function(event) {
+                const target = event.target as HTMLElement;
+                if (target.tagName === 'SPAN') {
+                    const x = parseInt(target.getAttribute('data-x')!, 10);
+                    const y = parseInt(target.getAttribute('data-y')!, 10);
+                    headerDiv.textContent = `插入 ${y} 行 ${x} 列的表格`;
+                    const cells = tableDiv.querySelectorAll('span');
+                    cells.forEach((cell) => {
+                        const cellX = parseInt(cell.getAttribute('data-x')!, 10);
+                        const cellY = parseInt(cell.getAttribute('data-y')!, 10);
+                        if (cellX <= x && cellY <= y) {
+                            cell.classList.add('active');
+                        } else {
+                            cell.classList.remove('active');
+                        }
+                    });
+                }
+            });
+            return tableDiv;
+        },
     },
 }

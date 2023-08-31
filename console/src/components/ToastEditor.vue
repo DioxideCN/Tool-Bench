@@ -200,6 +200,21 @@ onMounted(async () => {
           tooltip: '表格',
           className: 'fa-solid fa-table',
           state: 'table',
+          popup: {
+            body: (() => {
+              function closeCallback() {
+                instance.eventEmitter.emit('closePopup');
+              }
+              function callback(x: number, y: number) {
+                closeCallback();
+                insertMdTable(x, y);
+              }
+              const tableDom = PopupBuilder.UseRegular.table(callback);
+              return PopupBuilder.build('表格', closeCallback, tableDom);
+            })(),
+            className: 'popup-tool-heading',
+            style: { width: '240px'},
+          }
         },
         {
           name: 'tool-link',
@@ -236,7 +251,7 @@ onMounted(async () => {
       ],
     ],
   });
-
+  // 更新主题按钮
   function updateToolbarItem(theme: string) {
     instance.removeToolbarItem(`tool-theme-${theme === 'light' ? 'moon' : 'day'}`);
     instance.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
@@ -246,7 +261,7 @@ onMounted(async () => {
       className: `fa-solid fa-${theme === 'light' ? 'sun' : 'moon'}`,
     });
   }
-
+  // 切换主题
   function switchTheme(): boolean {
     const editorDiv = document.getElementById('toast-editor');
     if (editorDiv) {
@@ -258,12 +273,41 @@ onMounted(async () => {
     }
     return false;
   }
-  
+  // 插入表情
   function insertEmoji(emoji: string): boolean {
     if (emoji) {
-      const [start, end] = instance.getSelection();
-      // @ts-ignore
-      instance.replaceSelection(emoji, [start[0], start[0] - emoji.length], end - 1);
+      const [start] = instance.getSelection() as [number[], number[]];
+      instance.replaceSelection(emoji);
+    }
+    return false;
+  }
+  // 插入表格
+  function insertMdTable(x: number, y: number): boolean {
+    if (x > 0 && y > 0) {
+      const [start] = instance.getSelection() as [number[], number[]];
+      let tableMarkdown = '';
+      // 如果 start[1] !== 1，那就需要 start[0] + 1 换行开始插入
+      if (start[1] !== 1) {
+        tableMarkdown += '\n';
+      }
+      for (let col = 0; col < y; col++) {
+        tableMarkdown += '|  ';
+      }
+      tableMarkdown += '|\n';
+      for (let col = 0; col < y; col++) {
+        tableMarkdown += '| --- ';
+      }
+      tableMarkdown += '|\n';
+      // 生成表格主体
+      for (let row = 0; row < x - 1; row++) {
+        for (let col = 0; col < y; col++) {
+          tableMarkdown += '|  ';
+        }
+        tableMarkdown += '|\n';
+      }
+      // 将这个表格语法插入到指定的位置
+      instance.replaceSelection(tableMarkdown);
+      return true;
     }
     return false;
   }
@@ -282,11 +326,12 @@ onMounted(async () => {
   function useUpdate() {
     const selection = instance.getSelection();
     const mdContent = instance.getMarkdown();
+    const focusText = instance.getSelectedText();
     // 更新统计
     const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
     wordCount.value = _wordCount;
     characterCount.value = _characterCount;
-    selectCount.value = ContextUtil.Line.countSelect(mdContent, selection);
+    selectCount.value = ContextUtil.Line.countSelect(focusText);
     focusRow.value = (selection as [number[], number[]])[1][0];
     focusCol.value = (selection as [number[], number[]])[1][1];
     // 更新行

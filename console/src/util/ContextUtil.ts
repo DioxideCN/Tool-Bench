@@ -42,24 +42,10 @@ export const ContextUtil = {
     Line: {
         /**
          * 计算选区文本的字符数量
-         * @param originalText 所有文本内容
          * @param selection 选中的文本内容
          */
-        countSelect: (originalText: string,
-                      selection: SelectionPos): number => {
-            let count = 0;
-            const [start, end] = selection as [number[], number[]];
-            if (start[0] === end[0]) {
-                return end[1] - start[1];
-            }
-            const arr = originalText.split('\n');
-            const startLine = arr[start[0] - 1];
-            count += startLine.replace(/\s+/g, '').length - start[1];
-            for (let i = start[0]; i < end[0] - 1; i++) {
-                count += arr[i].replace(/\s+/g, '').length;
-            }
-            count += end[1];
-            return count;
+        countSelect: (selection: string): number => {
+            return selection.replace(/\s+/g, '').length;
         },
         /**
          * 计算当前内容区域的行数
