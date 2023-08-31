@@ -1,3 +1,5 @@
+import type {SelectionPos} from "@toast-ui/editor/types/editor";
+
 export const ContextUtil = {
     countWord: (text: string) => {
         // 移除 Markdown 格式
@@ -14,14 +16,47 @@ export const ContextUtil = {
             _characterCount
         };
     },
+    onResize: (mdEditor: Element,
+               callback: Function) => {
+        window.addEventListener('resize', () => {
+            callback();
+        })
+        const resizeObserver = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                if (entry.contentRect.width !== entry.target.clientWidth) {
+                    callback();
+                }
+            }
+        });
+        resizeObserver.observe(mdEditor);
+    },
     
     Line: {
-        getContent: () => {
-            
+        /**
+         * 计算选区文本的字符数量
+         * @param originalText 所有文本内容
+         * @param selection 选中的文本内容
+         */
+        countSelect: (originalText: string,
+                      selection: SelectionPos): number => {
+            let count = 0;
+            const [start, end]: any = selection;
+            if (start[0] === end[0]) {
+                return end[1] - start[1];
+            }
+            const arr = originalText.split('\n');
+            const startLine = arr[start[0] - 1];
+            count += startLine.replace(/\s+/g, '').length - start[1];
+            for (let i = start[0]; i < end[0] - 1; i++) {
+                count += arr[i].replace(/\s+/g, '').length;
+            }
+            count += end[1];
+            return count;
         },
         /**
          * 计算当前内容区域的行数
          * @param mdEditor 编辑器对象
+         * @param selection 选择器
          * @param prevIndexMap 上一次的空行补齐集合
          * @param oldLineCount 上一次的行数
          * @return oldLineCount 更新后的新的行数
@@ -30,6 +65,7 @@ export const ContextUtil = {
          * @author DioxideCN
          */
         count: (mdEditor: Element,
+                selection: SelectionPos,
                 prevIndexMap: Map<number, number>,
                 oldLineCount: number) => {
             const indexMap: Map<number, number> = new Map();
@@ -48,12 +84,12 @@ export const ContextUtil = {
             let newLineContainer = null;
             if (JSON.stringify(Array.from(indexMap)) !== JSON.stringify(Array.from(prevIndexMap)) || oldLineCount !== newLineCount) {
                 // 行数发生变化：需要通知更新行容器
-                newLineContainer = ContextUtil.Line.updateLine(newLineCount, indexMap);
+                newLineContainer = ContextUtil.Line.updateLine(newLineCount, selection, indexMap);
                 prevIndexMap = indexMap;
                 oldLineCount = newLineCount;
             } else {
                 // 只发生光标的移动：以回调的方式只更新聚焦高亮的行
-                const lineNumber: number = ContextUtil.Line.getHighlightLine();
+                const lineNumber: number = ContextUtil.Line.getHighlightLine(selection);
                 if (lineNumber !== -1) {
                     const divs = document.querySelectorAll('div[data-row]');
                     divs.forEach((div) => {
@@ -76,14 +112,16 @@ export const ContextUtil = {
         /**
          * 当内容的行数发生变化时应当通知到这个方法更新行号容器
          * @param val 总行数
+         * @param selection 选择器
          * @param markMap 被标记需要插入空行补齐的索引集合
          * @return fragment 返回新的行容器在外部对DOM进行更新
          * @author DioxideCN
          */
         updateLine: (val: number,
+                     selection: SelectionPos,
                      markMap: Map<number, number>): DocumentFragment => {
             const fragment = document.createDocumentFragment();
-            const highlightRowNum = ContextUtil.Line.getHighlightLine();
+            const highlightRowNum = ContextUtil.Line.getHighlightLine(selection);
             for (let i = 0; i < val; i++) {
                 const newLineItem = document.createElement("div");
                 newLineItem.className = "line-item";
@@ -106,25 +144,13 @@ export const ContextUtil = {
         },
         /**
          * 获取需要高亮显示的行号
+         * @param selection 选择器
          * @return number 返回高亮显示的行号
          * @author DioxideCN
          */
-        getHighlightLine: (): number => {
-            // 获取选择的文本DOM
-            const selection = window.getSelection();
-            if (!selection) return -1;
-            let someNode = selection.anchorNode;
-            if (!someNode) return -1;
+        getHighlightLine: (selection: SelectionPos): number => {
             // @ts-ignore
-            // 向上遍历DOM树，直到父DOM包含ProseMirror
-            while (someNode && !someNode.parentNode?.classList?.contains('ProseMirror')) {
-                someNode = someNode.parentNode;
-            }
-            if (!someNode) return -1;
-            const parentNode = someNode.parentNode;
-            if (!parentNode) return -1;
-            // 将需要高亮的行号返回
-            return Array.prototype.indexOf.call(parentNode.childNodes, someNode) + 1;
+            return selection[1][0];
         },
     }
 }

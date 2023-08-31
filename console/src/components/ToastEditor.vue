@@ -271,7 +271,6 @@ onMounted(async () => {
 
   updateToolbarItem(getTheme());
   instance.addCommand('markdown', 'switchTheme', () => switchTheme());
-  // 恢复缓存
   instance.setMarkdown(props.raw);
 
   // 构造行数容器
@@ -281,8 +280,14 @@ onMounted(async () => {
   lineNumberDOM.className = 'editor-line-number';
   lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
   editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
-  function handleLineUpdate() {
-    const getter = ContextUtil.Line.count(mdEditor, prevIndexMap, oldLineCount);
+  function useUpdate() {
+    // 更新统计
+    const { _wordCount, _characterCount } = ContextUtil.countWord(instance.getMarkdown());
+    wordCount.value = _wordCount;
+    characterCount.value = _characterCount;
+    selectCount.value = ContextUtil.Line.countSelect(instance.getMarkdown(), instance.getSelection());
+    // 更新行
+    const getter = ContextUtil.Line.count(mdEditor, instance.getSelection(), prevIndexMap, oldLineCount);
     prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
     oldLineCount = getter.oldLineCount; // 更新总行数
     const fragment = getter.newLineContainer; // 更新行容器
@@ -290,11 +295,7 @@ onMounted(async () => {
       lineNumberDOM.innerHTML = '';
       lineNumberDOM.appendChild(fragment);
     }
-  }
-  handleLineUpdate();
-
-  // 更新文本
-  function updateContext(): void {
+    // 更新内存文本
     if (autoSave.value) { // 需要自动保存
       const markdown = instance.getMarkdown();
       if (props.raw !== markdown) {
@@ -304,45 +305,16 @@ onMounted(async () => {
       }
     }
   }
+  useUpdate();
   
   instance.on('caretChange', () => {
-    const { _wordCount, _characterCount } = ContextUtil.countWord(instance.getMarkdown());
-    wordCount.value = _wordCount;
-    characterCount.value = _characterCount;
-    handleLineUpdate();
-    updateContext();
+    useUpdate();
     // 计算是否有选择内容
     const [start, end] = instance.getSelection();
   });
-  
-  function highlightLine(): number {
-    const selection = window.getSelection();
-    if (!selection) return -1;
-    let someNode = selection.anchorNode;
-    if (!someNode) return -1;
 
-    // @ts-ignore
-    // 向上遍历DOM树，直到父DOM包含ProseMirror
-    while (someNode && !someNode.parentNode?.classList?.contains('ProseMirror')) {
-      someNode = someNode.parentNode;
-    }
-    if (!someNode) return -1;
-    const parentNode = someNode.parentNode;
-    if (!parentNode) return -1;
-    focusRow.value = Array.prototype.indexOf.call(parentNode.childNodes, someNode) + 1;
-    return focusRow.value;
-  }
-  
   // 监听内容区域的宽度变化
-  window.addEventListener('resize', () => {handleLineUpdate()})
-  const resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      if (entry.contentRect.width !== entry.target.clientWidth) {
-        handleLineUpdate();
-      }
-    }
-  });
-  resizeObserver.observe(mdEditor);
+  ContextUtil.onResize(mdEditor, useUpdate);
 });
 </script>
 
