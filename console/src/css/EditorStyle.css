@@ -367,6 +367,7 @@ span.stat-panel--key.last { margin-right: -10px; }
 }
 
 .heading-item:hover,
+li.emoji-item:hover,
 .popup-head--btn-group i:hover {
     background: var(--popup-hover-bg);
 }
@@ -383,4 +384,21 @@ span.stat-panel--key.last { margin-right: -10px; }
 
 .toastui-editor-toolbar-group button.active {
     color: #007acc;
+}
+ul.emoji-list {
+    font-size: 20px;
+    list-style: none;
+    text-align: left;
+    width: 100%;
+    line-height: 1.5;
+    box-sizing: border-box;
+    margin: 0;
+    outline: none;
+    padding: 0;
+}
+ul.emoji-list li.emoji-item {
+    border-radius: 3px 3px;
+    cursor: pointer;
+    display: inline-block;
+    padding: 0 5px;
 }

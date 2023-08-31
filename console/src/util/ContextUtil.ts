@@ -1,5 +1,13 @@
 import type {SelectionPos} from "@toast-ui/editor/types/editor";
 
+function isMapEqual(a: Map<any, any>, b: Map<any, any>): boolean {
+    if (a.size !== b.size) return false;
+    for (const [key, val] of a.entries()) {
+        if (b.get(key) !== val) return false;
+    }
+    return true;
+}
+
 export const ContextUtil = {
     countWord: (text: string) => {
         // 移除 Markdown 格式
@@ -40,7 +48,7 @@ export const ContextUtil = {
         countSelect: (originalText: string,
                       selection: SelectionPos): number => {
             let count = 0;
-            const [start, end]: any = selection;
+            const [start, end] = selection as [number[], number[]];
             if (start[0] === end[0]) {
                 return end[1] - start[1];
             }
@@ -82,7 +90,7 @@ export const ContextUtil = {
             })
             // 声明容器
             let newLineContainer = null;
-            if (JSON.stringify(Array.from(indexMap)) !== JSON.stringify(Array.from(prevIndexMap)) || oldLineCount !== newLineCount) {
+            if (!isMapEqual(indexMap, prevIndexMap) || oldLineCount !== newLineCount) {
                 // 行数发生变化：需要通知更新行容器
                 newLineContainer = ContextUtil.Line.updateLine(newLineCount, selection, indexMap);
                 prevIndexMap = indexMap;

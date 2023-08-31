@@ -88,7 +88,6 @@ function switchPreview(): void {
     editArea.style.width = trigger ? '50%' : '100%';
   }
 }
-
 const emit = defineEmits<{
   (event: "update:raw", value: string): void;
   (event: "update:content", value: string): void;
@@ -306,13 +305,8 @@ onMounted(async () => {
     }
   }
   useUpdate();
-  
-  instance.on('caretChange', () => {
-    useUpdate();
-    // 计算是否有选择内容
-    const [start, end] = instance.getSelection();
-  });
-
+  // 事件更新驱动
+  instance.on('caretChange', () => {useUpdate();});
   // 监听内容区域的宽度变化
   ContextUtil.onResize(mdEditor, useUpdate);
 });
