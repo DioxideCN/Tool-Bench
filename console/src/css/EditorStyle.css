@@ -14,6 +14,7 @@
     --default-highlight: rgb(173,214,255);
     --popup-bg-color: #fff;
     --popup-border: 1px solid #cecece;
+    --popup-input-border: rgba(0, 0, 0, .12);
     --popup-box-shadow: rgba(0, 0, 0, 0.16) 0px 0px 8px 2px;
     --popup-hover-bg: #f2f2f2;
     --line-highlight: #000;
@@ -35,6 +36,7 @@
     --default-highlight: rgb(38,79,120);
     --popup-bg-color: #2a2a2a;
     --popup-border: 1px solid rgba(0, 0, 0, 0.1);
+    --popup-input-border: rgba(255, 255, 255, .12);
     --popup-box-shadow: rgba(0, 0, 0, 0.36) 0px 0px 8px 2px;
     --popup-hover-bg: rgba(90, 93, 94, 0.31);
     --line-highlight: #ccc;
@@ -189,8 +191,11 @@ span.stat-panel--key.last { margin-right: -10px; }
 }
 .toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents {
     white-space: nowrap;
+    width: 100%;
     word-wrap: break-word;
     word-break: break-all;
+    text-wrap: initial;
+    overflow-x: hidden;
     padding: 5px 0!important;
 }
 
@@ -416,3 +421,49 @@ ul.emoji-list li.emoji-item {
     width: 20px;
     margin: 1px;
 }
+
+.link-wrapper span { margin-bottom: 8px; display: block; }
+.toastui-editor-popup-body input[id^=link-ipt],
+.toastui-editor-popup-body input[id^=image-ipt] {
+    margin-bottom: 8px;
+    background: inherit;
+    border-radius: 4px!important;
+    outline: none;
+    border: 1px solid var(--popup-input-border);
+    width: 100%;
+    color: #ccc;
+}
+.toastui-editor-popup-body input[id^=link-ipt]:focus,
+.toastui-editor-popup-body input[id^=image-ipt]:focus {
+    outline: none;
+    width: 100%;
+    border: 1px solid #0078d4;
+}
+
+.toastui-editor-defaultUI button[id^=link-btn--confirm],
+.toastui-editor-defaultUI button[id^=image-btn--confirm] {
+    background: #0078d4;
+    padding: 4px 13px;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    color: #fff;
+    font-size: 14px;
+    height: 30px;
+}
+.toastui-editor-defaultUI button[id^=link-btn--confirm]:hover,
+.toastui-editor-defaultUI button[id^=image-btn--confirm]:hover {
+    background: rgba(0, 120, 212, 0.9);
+}
+
+.toastui-editor-md-custom-block-line-background {
+    background-color: transparent;
+    color: var(--display-p);
+    font-size: 18px;
+}
+.toastui-editor-md-custom-block { color: var(--display-p); }
+.toastui-editor-md-custom-block .toastui-editor-md-meta,
+.toastui-editor-md-custom-block .toastui-editor-md-delimiter { color: #999; }

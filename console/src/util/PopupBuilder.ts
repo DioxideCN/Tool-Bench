@@ -1,3 +1,36 @@
+function createWrapper(type: 'link' | 'image', handler: Function): HTMLElement {
+    const div = document.createElement('div');
+    div.className = `${type}-wrapper`;
+
+    const fields = [
+        { className: `${type}-alt-wrapper`, label: type === 'link' ? '链接文本' : '图像替代文本', placeholder: type === 'link' ? '输入超链接的显示文本' : '输入图像的替代文本', id: `${type}-ipt--alt` },
+        { className: `${type}-url-wrapper`, label: type === 'link' ? '链接地址' : '图像地址', placeholder: type === 'link' ? '输入超链接的URL地址' : '输入图像的URL地址', id: `${type}-ipt--url` }
+    ];
+
+    fields.forEach(field => {
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = field.className;
+        fieldDiv.innerHTML = `<span>${field.label}</span><input type="text" id="${field.id}" placeholder="${field.placeholder}">`;
+        div.appendChild(fieldDiv);
+    });
+
+    const confirmButton = document.createElement('button');
+    confirmButton.id = `${type}-btn--confirm`;
+    confirmButton.textContent = '确认';
+    confirmButton.addEventListener('click', () => {
+        const altInput = document.getElementById(`${type}-ipt--alt`) as HTMLInputElement;
+        const urlInput = document.getElementById(`${type}-ipt--url`) as HTMLInputElement;
+        const alt = altInput.value;
+        const url = urlInput.value;
+        handler(alt, url);
+        altInput.value = '';
+        urlInput.value = '';
+    });
+    div.appendChild(confirmButton);
+
+    return div;
+}
+
 export const PopupBuilder = {
     /**
      * 构造弹出框DOM
@@ -41,7 +74,6 @@ export const PopupBuilder = {
         return wrapperDiv;
     },
     
-    
     UseRegular: {
         heading: (level: number, text: string, handler: Function): HTMLElement => {
             const div = document.createElement('div');
@@ -67,7 +99,7 @@ export const PopupBuilder = {
             });
             return ul;
         },
-        table: (handler: Function) => {
+        table: (handler: Function): HTMLElement => {
             const tableDiv = document.createElement('div');
             tableDiv.className = "popup-tableDiv--main";
             const headerDiv = document.createElement('div');
@@ -125,6 +157,12 @@ export const PopupBuilder = {
                 }
             });
             return tableDiv;
+        },
+        link: (handler: Function): HTMLElement => {
+            return createWrapper('link', handler);
+        },
+        image: (handler:Function): HTMLElement => {
+            return createWrapper('image', handler);
         },
     },
 }

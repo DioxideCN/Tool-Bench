@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@toast-ui/editor-plugin-code-syntax-highlight": "^3.1.0",
+    "@types/prismjs": "^1.26.0",
+    "prismjs": "^1.29.0"
+  }
+}
