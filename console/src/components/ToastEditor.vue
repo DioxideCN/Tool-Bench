@@ -1,39 +1,39 @@
 <template>
-  <section :data-theme="currentTheme" class="toast-wrapper">
-    <div id="toast-editor"></div>
-    <div class="toolbar-stat-panel">
-      <div class="stat-head">
-        <i class="fa-solid fa-plug"></i>
-      </div>
-      <div class="stat-panel">
-        <div class="stat-panel--left">
-          <span class="stat-panel--key">
-            设置
-          </span>
-          <span class="stat-panel--key" @click="switchAutoSave()">
-            {{ autoSave ? '自动保存' : '手动保存' }}
-          </span>
+    <section :data-theme="currentTheme" class="toast-wrapper">
+        <div id="toast-editor"></div>
+        <div class="toolbar-stat-panel">
+            <div class="stat-head">
+                <i class="fa-solid fa-plug"></i>
+            </div>
+            <div class="stat-panel">
+                <div class="stat-panel--left">
+                    <span class="stat-panel--key">
+                        设置
+                    </span>
+                    <span class="stat-panel--key" @click="switchAutoSave()">
+                        {{ autoSave ? '自动保存' : '手动保存' }}
+                    </span>
+                </div>
+                <div class="stat-panel--right">
+                    <span class="stat-panel--key">
+                        行 {{ focusRow }}, 列 {{ focusCol }}{{ selectCount ? ` (已选择${selectCount})` : '' }}
+                    </span>
+                    <span class="stat-panel--key">
+                        字词 {{ wordCount }}, 字符 {{ characterCount }}
+                    </span>
+                    <span class="stat-panel--key">
+                        <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-terminal"></i>Markdown
+                    </span>
+                    <span class="stat-panel--key" @click="switchPreview()">
+                        <i class="fa-solid" style="margin-right: 0;" :class="previewEnable?'fa-eye':'fa-eye-slash'"></i>
+                    </span>
+                    <span class="stat-panel--key last">
+                        <a href="https://github.com/DioxideCN/Tool-Bench" target="_blank"><i class="fa-brands fa-github"></i></a>
+                    </span>
+                </div>
+            </div>
         </div>
-        <div class="stat-panel--right">
-          <span class="stat-panel--key">
-            行 {{ focusRow }}, 列 {{ focusCol }}{{ selectCount ? ` (已选择${selectCount})` : '' }}
-          </span>
-          <span class="stat-panel--key">
-            字词 {{ wordCount }}, 字符 {{ characterCount }}
-          </span>
-          <span class="stat-panel--key">
-            <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-terminal"></i>Markdown
-          </span>
-          <span class="stat-panel--key" @click="switchPreview()">
-            <i class="fa-solid" style="margin-right: 0;" :class="previewEnable?'fa-eye':'fa-eye-slash'"></i>
-          </span>
-          <span class="stat-panel--key last">
-            <a href="https://github.com/DioxideCN/Tool-Bench" target="_blank"><i class="fa-brands fa-github"></i></a>
-          </span>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
 </template>
 
 <script lang="ts" setup>
@@ -307,7 +307,7 @@ onMounted(async () => {
         if (x > 0 && y > 0) {
             const [start] = instance.getSelection() as [number[], number[]];
             let tableMarkdown = '';
-            tableMarkdown += start[1] === 1 ? '\n' : '\n\n';
+            tableMarkdown += start[1] === 1 ? '' : '\n\n';
             for (let col = 0; col < y; col++) {
                 tableMarkdown += '|  ';
             }
