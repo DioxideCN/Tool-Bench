@@ -37,10 +37,14 @@
 </template>
 
 <script lang="ts" setup>
+import hljs from 'highlight.js';
 import { onMounted, ref } from "vue";
 import { Editor } from "@toast-ui/editor";
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
+
+// @ts-ignore
+window.hljs = hljs;
 
 // 编辑器主题
 function getTheme(): string {
@@ -73,6 +77,7 @@ const props = defineProps({
         default: "",
     },
 });
+
 // 切换自动保存
 function switchAutoSave(): void {
   autoSave.value = !autoSave.value;
@@ -97,6 +102,13 @@ const emit = defineEmits<{
     (event: "update:content", value: string): void;
     (event: "update", value: string): void;
 }>();
+// 渲染code block
+function renderCodeBlock() {
+    const elements = document.getElementsByClassName('hljs');
+    for (let element of elements) {
+        hljs.highlightElement(element as HTMLElement);
+    }
+}
 
 onMounted(async () => {
     // 初始化Toast编辑器
@@ -266,6 +278,35 @@ onMounted(async () => {
                 },
             },
         ]],
+        customHTMLRenderer: {
+            codeBlock(node: any) {
+                renderCodeBlock();
+                return [
+                    { 
+                        type: 'openTag', 
+                        tagName: 'pre', 
+                        classNames: ['hljs', 'language-' + node.info]
+                    },
+                    { 
+                        type: 'openTag', 
+                        tagName: 'code',
+                        classNames: ['language-' + node.info]
+                    },
+                    { 
+                        type: 'text', 
+                        content: node.literal! 
+                    },
+                    { 
+                        type: 'closeTag', 
+                        tagName: 'code' 
+                    },
+                    { 
+                        type: 'closeTag', 
+                        tagName: 'pre' 
+                    }
+                ];
+            }
+        }
     });
     
     // 关闭弹窗
@@ -296,47 +337,19 @@ onMounted(async () => {
     }
     // 插入表情
     function insertEmoji(emoji: string): boolean {
-        if (emoji) {
-            instance.replaceSelection(emoji);
-            return true;
-        }
-    return false;
+        return ContextUtil.UseRegular.createEmoji(emoji, instance);
     }
     // 插入表格
     function insertTable(x: number, y: number): boolean {
-        if (x > 0 && y > 0) {
-            const [start] = instance.getSelection() as [number[], number[]];
-            let tableMarkdown = '';
-            tableMarkdown += start[1] === 1 ? '' : '\n\n';
-            for (let col = 0; col < y; col++) {
-                tableMarkdown += '|  ';
-            }
-            tableMarkdown += '|\n';
-            for (let col = 0; col < y; col++) {
-                tableMarkdown += '| --- ';
-            }
-            tableMarkdown += '|\n';
-            // 生成表格主体
-            for (let row = 0; row < x - 1; row++) {
-                for (let col = 0; col < y; col++) {
-                    tableMarkdown += '|  ';
-                }
-                tableMarkdown += '|\n';
-            }
-            instance.replaceSelection(tableMarkdown);
-            return true;
-        }
-    return false;
+        return ContextUtil.UseRegular.createTable(x, y, instance);
     }
     // 插入超链接
     function insertLink(alt: string, url: string): boolean {
-        instance.replaceSelection(`[${alt}](${url})`);
-        return true;
+        return ContextUtil.UseRegular.createLink(alt, url, instance);
     }
     // 插入图片
     function insertImage(alt: string, url: string): boolean {
-        instance.replaceSelection(`![${alt}](${url})`);
-        return true;
+        return ContextUtil.UseRegular.createImage(alt, url, instance);
     }
     
     updateToolbarItem(getTheme());
@@ -385,12 +398,13 @@ onMounted(async () => {
     instance.on('caretChange', () => {useUpdate();});
     // 监听内容区域的宽度变化
     ContextUtil.onResize(mdEditor, useUpdate);
+    // 渲染代码块
+    renderCodeBlock();
 });
 </script>
 
 <style>
     @import "@toast-ui/editor/dist/toastui-editor.css";
-    @import "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css";
     @import "@fortawesome/fontawesome-free/css/all.min.css";
-    @import "../css/EditorStyle.css";
+    @import "@/css/EditorStyle.css";
 </style>

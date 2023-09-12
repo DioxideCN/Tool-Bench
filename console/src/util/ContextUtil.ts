@@ -1,4 +1,5 @@
 import type {SelectionPos} from "@toast-ui/editor/types/editor";
+import type {Editor} from "@toast-ui/editor";
 
 function isMapEqual(a: Map<any, any>, b: Map<any, any>): boolean {
     if (a.size !== b.size) return false;
@@ -37,6 +38,48 @@ export const ContextUtil = {
             }
         });
         resizeObserver.observe(mdEditor);
+    },
+    
+    UseRegular: {
+        createTable: (x: number, y: number, instance: Editor): boolean => {
+            if (x > 0 && y > 0) {
+                const [start] = instance.getSelection() as [number[], number[]];
+                let tableMarkdown = start[1] === 1 ? '' : '\n';
+                for (let col = 0; col < y; col++) {
+                    tableMarkdown += '|  ';
+                }
+                tableMarkdown += '|\n';
+                for (let col = 0; col < y; col++) {
+                    tableMarkdown += '| --- ';
+                }
+                tableMarkdown += '|\n';
+                // 生成表格主体
+                for (let row = 0; row < x - 1; row++) {
+                    for (let col = 0; col < y; col++) {
+                        tableMarkdown += '|  ';
+                    }
+                    tableMarkdown += '|\n';
+                }
+                instance.replaceSelection(tableMarkdown);
+                return true;
+            }
+            return false;
+        },
+        createLink: (alt: string, url: string, instance: Editor): boolean => {
+            instance.replaceSelection(`[${alt}](${url})`);
+            return true;
+        },
+        createImage: (alt: string, url: string, instance: Editor): boolean => {
+            instance.replaceSelection(`![${alt}](${url})`);
+            return true;
+        },
+        createEmoji: (emoji: string, instance: Editor): boolean => {
+            if (emoji) {
+                instance.replaceSelection(emoji);
+                return true;
+            }
+            return false;
+        }
     },
     
     Line: {
