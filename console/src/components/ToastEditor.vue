@@ -43,8 +43,10 @@ import { Editor } from "@toast-ui/editor";
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 
-// @ts-ignore
-window.hljs = hljs;
+hljs.configure({
+  ignoreUnescapedHTML: true,
+  throwUnescapedHTML: false,
+});
 
 // 编辑器主题
 function getTheme(): string {
@@ -280,7 +282,6 @@ onMounted(async () => {
         ]],
         customHTMLRenderer: {
             codeBlock(node: any) {
-                renderCodeBlock();
                 return [
                     { 
                         type: 'openTag', 
@@ -364,38 +365,39 @@ onMounted(async () => {
     lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
     editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
     function useUpdate() {
-    const selection = instance.getSelection();
-    const mdContent = instance.getMarkdown();
-    const focusText = instance.getSelectedText();
-    // 更新统计
-    const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
-    wordCount.value = _wordCount;
-    characterCount.value = _characterCount;
-    selectCount.value = ContextUtil.Line.countSelect(focusText);
-    focusRow.value = (selection as [number[], number[]])[1][0];
-    focusCol.value = (selection as [number[], number[]])[1][1];
-    // 更新行
-    const getter = ContextUtil.Line.count(mdEditor, selection, prevIndexMap, oldLineCount);
-    prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
-    oldLineCount = getter.oldLineCount; // 更新总行数
-    const fragment = getter.newLineContainer; // 更新行容器
-    if (fragment) {
-      lineNumberDOM.innerHTML = '';
-      lineNumberDOM.appendChild(fragment);
-    }
-    // 更新内存文本
-    if (autoSave.value) { // 需要自动保存
-      const markdown = instance.getMarkdown();
-      if (props.raw !== markdown) {
-        emit('update:raw', markdown);
-        emit('update:content', markdown);
-        emit("update", markdown);
-      }
-    }
+        const selection = instance.getSelection();
+        const mdContent = instance.getMarkdown();
+        const focusText = instance.getSelectedText();
+        // 更新统计
+        const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
+        wordCount.value = _wordCount;
+        characterCount.value = _characterCount;
+        selectCount.value = ContextUtil.Line.countSelect(focusText);
+        focusRow.value = (selection as [number[], number[]])[1][0];
+        focusCol.value = (selection as [number[], number[]])[1][1];
+        // 更新行
+        const getter = ContextUtil.Line.count(mdEditor, selection, prevIndexMap, oldLineCount);
+        prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
+        oldLineCount = getter.oldLineCount; // 更新总行数
+        const fragment = getter.newLineContainer; // 更新行容器
+        if (fragment) {
+            lineNumberDOM.innerHTML = '';
+            lineNumberDOM.appendChild(fragment);
+        }
+        // 更新内存文本
+        if (autoSave.value) { // 需要自动保存
+            const markdown = instance.getMarkdown();
+            if (props.raw !== markdown) {
+                emit('update:raw', markdown);
+                emit('update:content', markdown);
+                emit("update", markdown);
+            }
+        }
     }
     useUpdate();
     // 事件更新驱动
-    instance.on('caretChange', () => {useUpdate();});
+    instance.on('caretChange', () => { useUpdate(); });
+    instance.on('updatePreview', () => { renderCodeBlock(); })
     // 监听内容区域的宽度变化
     ContextUtil.onResize(mdEditor, useUpdate);
     // 渲染代码块
