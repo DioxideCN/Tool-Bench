@@ -10,8 +10,11 @@
                     <span class="stat-panel--key">
                         设置
                     </span>
+                    <span class="stat-panel--key" @click="openSearch()">
+                        <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-magnifying-glass"></i>查找
+                    </span>
                     <span class="stat-panel--key" @click="switchAutoSave()">
-                        {{ autoSave ? '自动保存' : '手动保存' }}
+                        <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-floppy-disk"></i>{{ autoSave ? '自动' : '手动' }}保存
                     </span>
                 </div>
                 <div class="stat-panel--right">
@@ -30,6 +33,23 @@
                     <span class="stat-panel--key last">
                         <a href="https://github.com/DioxideCN/Tool-Bench" target="_blank"><i class="fa-brands fa-github"></i></a>
                     </span>
+                </div>
+            </div>
+        </div>
+        <div class="amber-popup">
+            <div class="amber-popup--search" :style="'display:' + (searchEnable?'block':'none')">
+                <div class="amber-popup--ahead">
+                    <div class="amber-popup--group">
+                        <input id="amber-search--input" type="text" placeholder="查找" />
+                        <i class="fa-solid fa-a amber-popup--capitalization"></i>
+                        <i class="fa-solid fa-asterisk amber-popup--regular"></i>
+                    </div>
+                    <span class="amber-popup--result">无结果</span>
+                    <div class="amber-popup--btn">
+                        <i class="fa-solid fa-arrow-up amber-popup--last disable"></i>
+                        <i class="fa-solid fa-arrow-down amber-popup--next disable"></i>
+                        <i class="fa-solid fa-xmark amber-popup--close" @click="searchEnable = false"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,6 +78,7 @@ function getTheme(): string {
     return theme;
 }
 
+const searchEnable = ref(false); // 搜索
 const previewEnable = ref(true); // 启用预览
 const autoSave = ref(true);      // 自动保存
 const wordCount = ref(0);        // 词数
@@ -82,7 +103,7 @@ const props = defineProps({
 
 // 切换自动保存
 function switchAutoSave(): void {
-  autoSave.value = !autoSave.value;
+    autoSave.value = !autoSave.value;
 }
 // 切换预览状态
 function switchPreview(): void {
@@ -110,6 +131,10 @@ function renderCodeBlock() {
     for (let element of elements) {
         hljs.highlightElement(element as HTMLElement);
     }
+}
+// 启用搜索
+function openSearch(): void {
+    searchEnable.value = !searchEnable.value;
 }
 
 onMounted(async () => {
