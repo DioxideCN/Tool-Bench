@@ -36,19 +36,19 @@
                 </div>
             </div>
         </div>
-        <div class="amber-popup">
+        <div id="amber-popup--group" class="amber-popup">
             <div class="amber-popup--search" :style="'display:' + (searchEnable?'block':'none')">
                 <div class="amber-popup--ahead">
                     <div class="amber-popup--group">
-                        <input id="amber-search--input" type="text" placeholder="查找" />
-                        <i class="fa-solid fa-a amber-popup--capitalization"></i>
-                        <i class="fa-solid fa-asterisk amber-popup--regular"></i>
+                        <input @input="doSearch()" id="amber-search--input" type="text" placeholder="查找" />
+                        <i @click="switchSearchCondition1()" :class="searchCondition.capitalization?'active':''" class="fa-solid fa-a amber-popup--capitalization"></i>
+                        <i @click="switchSearchCondition2()" :class="searchCondition.regular?'active':''" class="fa-solid fa-asterisk amber-popup--regular"></i>
                     </div>
-                    <span class="amber-popup--result">无结果</span>
+                    <span class="amber-popup--result">{{ searchResult.total === 0 ? '无结果' : ('第 ' + searchResult.hoverOn + ' 项, 共 ' + searchResult.total) + ' 项' }}</span>
                     <div class="amber-popup--btn">
                         <i class="fa-solid fa-arrow-up amber-popup--last disable"></i>
                         <i class="fa-solid fa-arrow-down amber-popup--next disable"></i>
-                        <i class="fa-solid fa-xmark amber-popup--close" @click="searchEnable = false"></i>
+                        <i class="fa-solid fa-xmark amber-popup--close" @click="openSearch()"></i>
                     </div>
                 </div>
             </div>
@@ -62,10 +62,11 @@ import { onMounted, ref } from "vue";
 import { Editor } from "@toast-ui/editor";
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
+import { SearchUtil } from "@/util/SearchUtil";
 
 hljs.configure({
-  ignoreUnescapedHTML: true,
-  throwUnescapedHTML: false,
+    ignoreUnescapedHTML: true,
+    throwUnescapedHTML: false,
 });
 
 // 编辑器主题
@@ -78,7 +79,11 @@ function getTheme(): string {
     return theme;
 }
 
-const searchEnable = ref(false); // 搜索
+const searchEnable = ref(false); // 查找
+const searchCondition = ref({    // 条件查找
+    capitalization: false,            // 大小写敏感
+    regular: false,                   // 正则查找
+});
 const previewEnable = ref(true); // 启用预览
 const autoSave = ref(true);      // 自动保存
 const wordCount = ref(0);        // 词数
@@ -132,10 +137,27 @@ function renderCodeBlock() {
         hljs.highlightElement(element as HTMLElement);
     }
 }
-// 启用搜索
+// 执行查询
+let doSearch = () => {};
+// 启用查询
 function openSearch(): void {
     searchEnable.value = !searchEnable.value;
+    doSearch();
 }
+// 条件查询切换
+function switchSearchCondition1(): void {
+    searchCondition.value.capitalization = !searchCondition.value.capitalization;
+    doSearch();
+}
+function switchSearchCondition2(): void {
+    searchCondition.value.regular = !searchCondition.value.regular;
+    doSearch();
+}
+// 更新查找结果
+const searchResult = ref({
+    total: 0,
+    hoverOn: 0,
+});
 
 onMounted(async () => {
     // 初始化Toast编辑器
@@ -332,8 +354,37 @@ onMounted(async () => {
                     }
                 ];
             }
-        }
+        },
     });
+    
+    // 定义查询方法
+    doSearch = () => {
+        // 未启用搜索需要清空容器
+        if (!searchEnable.value) {
+            const amberContainer = document.getElementById("amber-highlight--group");
+            if (amberContainer) {
+                amberContainer.innerHTML = "";
+            }
+            return;
+        }
+        const value: string = (document.getElementById("amber-search--input") as HTMLInputElement).value!;
+        if (!searchCondition.value.regular) {
+            // 纯文本内容查询
+            const { total, markList } = SearchUtil.text(instance.getMarkdown(), value, searchCondition.value.capitalization);
+            SearchUtil.updateIt(searchResult, 
+                searchCondition, 
+                total, 
+                markList,
+                value);
+        } else {
+            const { total, markList } = SearchUtil.regex(instance.getMarkdown(), value, searchCondition.value.capitalization);
+            SearchUtil.updateIt(searchResult, 
+                searchCondition, 
+                total, 
+                markList,
+                value);
+        }
+    }
     
     // 关闭弹窗
     function closeCallback() {
@@ -388,7 +439,11 @@ onMounted(async () => {
     const lineNumberDOM = document.createElement('div');
     lineNumberDOM.className = 'editor-line-number';
     lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
+    // 构造高亮标记容器
+    const amberHighlightDOM = document.createElement('div');
+    amberHighlightDOM.id = "amber-highlight--group";
     editorArea.insertBefore(lineNumberDOM, editorArea.childNodes[0]);
+    editorArea.append(amberHighlightDOM);
     function useUpdate() {
         const selection = instance.getSelection();
         const mdContent = instance.getMarkdown();
@@ -418,15 +473,24 @@ onMounted(async () => {
                 emit("update", markdown);
             }
         }
+        // 尝试更新搜索内容
+        doSearch();
     }
     useUpdate();
     // 事件更新驱动
     instance.on('caretChange', () => { useUpdate(); });
     instance.on('updatePreview', () => { renderCodeBlock(); })
     // 监听内容区域的宽度变化
-    ContextUtil.onResize(mdEditor, useUpdate);
+    ContextUtil.onResize(mdEditor, useUpdate, doSearch);
     // 渲染代码块
     renderCodeBlock();
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 'f') {
+        event.preventDefault();
+        openSearch();
+    }
 });
 </script>
 

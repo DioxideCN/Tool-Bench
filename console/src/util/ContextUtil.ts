@@ -26,14 +26,18 @@ export const ContextUtil = {
         };
     },
     onResize: (mdEditor: Element,
-               callback: Function) => {
+               ...callbacks: Function[]) => {
         window.addEventListener('resize', () => {
-            callback();
+            callbacks.forEach(callback => {
+                callback();
+            })
         })
         const resizeObserver = new ResizeObserver(entries => {
             for (const entry of entries) {
                 if (entry.contentRect.width !== entry.target.clientWidth) {
-                    callback();
+                    callbacks.forEach(callback => {
+                        callback();
+                    })
                 }
             }
         });

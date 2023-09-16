@@ -226,6 +226,7 @@ span.stat-panel--key.last { margin-right: -10px; }
 .toastui-editor-defaultUI .ProseMirror { 
     width: calc(100% - 76px); 
     height: 130%!important;
+    z-index: 1;
 }
 .toastui-editor-contents .toastui-editor-md-preview-highlight:after {
     background-color: transparent!important;
@@ -602,8 +603,9 @@ pre.hljs,
     padding: 0 2px;
 }
 .amber-popup--ahead #amber-search--input {
-    width: 250px;
-    padding: 0 8px;
+    width: 200px;
+    font-size: 14px;
+    padding-left: 4px;
     outline: none;
     background: inherit;
 }
@@ -638,7 +640,7 @@ pre.hljs,
     justify-content: start;
     align-items: center;
     padding: 0 6px;
-    width: 84px;
+    min-width: 84px;
     cursor: default;
 }
 .amber-popup--btn { display: flex; }
@@ -646,4 +648,15 @@ pre.hljs,
 .amber-popup--btn .disable { 
     color: var(--code-amber-btn-disable);
     cursor: default!important;
+}
+
+#amber-highlight--group {
+    position: absolute;
+    z-index: 0;
+}
+#amber-highlight--group .amber-highlight--item {
+    height: 27px;
+    background-color: rgba(255,165,0,.25);
+    pointer-events: none;
+    position: absolute;
 }
