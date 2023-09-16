@@ -61,6 +61,7 @@ export const SearchUtil = {
                 const endColumn = match.index + match[0].length - lastNewlineBeforeEnd;
                 markList.push([startLine, startColumn, endLine, endColumn]);
             });
+            
             return { total, markList };
         } else {
             return {};
@@ -83,28 +84,28 @@ export const SearchUtil = {
             const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
             const divs = Array.from(editorArea.children);
             if (searchCondition.value.regular) {
-                // 正则数组 [[start_row, start_col, end_row, end_col]]
+                // 正则匹配 [[start_row, start_col, end_row, end_col]]
                 markList.forEach(range => {
                     const [startRow, startCol, endRow, endCol] = range;
                     // 如果开始行和结束行是同一行
                     if (startRow === endRow) {
                         const div = divs[startRow - 1];
-                        SearchUtil.renderHighlight(div, startCol, div, endCol);
+                        SearchUtil.renderHighlight(div, startCol, endCol);
                     } else {
                         // 处理开始行
                         let startDiv = divs[startRow - 1];
-                        SearchUtil.renderHighlight(startDiv, startCol, startDiv, startDiv.innerHTML.length + 1);
+                        SearchUtil.renderHighlight(startDiv, startCol, startDiv.textContent!.length + 1);
                         // 处理结束行
                         let endDiv = divs[endRow - 1];
-                        SearchUtil.renderHighlight(endDiv, 1, endDiv, endCol);
+                        SearchUtil.renderHighlight(endDiv, 1, endCol);
                     }
                 });
             } else {
-                // 全匹配数组 [[start_row, start_col]] -> += searching.length
+                // 纯文本匹配 [[start_row, start_col]] -> += searching.length
                 markList.forEach(range => {
                     const [startRow, startCol] = range;
                     const div = divs[startRow - 1]
-                    SearchUtil.renderHighlight(div, startCol, div, startCol + searchText.length);
+                    SearchUtil.renderHighlight(div, startCol, startCol + searchText.length);
                 })
             }
         } else {
@@ -113,69 +114,95 @@ export const SearchUtil = {
         }
     },
     /**
-     * 渲染搜索高亮层
-     * @param startDom 起始DOM节点
-     * @param startOffset 起始偏移量
-     * @param endDom 结束DOM节点
-     * @param endOffset 结束偏移量
+     * 该方法需要传递需要高亮区域的信息
+     * @param where 高亮区域的起始位置的DOM节点
+     * @param startOffset 起始位置在DOM文本内容中的[索引+1]处开始
+     * @param endOffset 结束位置在DOM文本内容中的[索引+1]处结束
      */
-    renderHighlight: (startDom: Element, 
-                      startOffset: number, 
-                      endDom: Element, 
+    renderHighlight: (where: Element, 
+                      startOffset: number,
                       endOffset: number): void => {
-        // 用于创建高亮元素
-        const createHighlight = (top: number, left: number, width: number) => {
-            const highlightDiv = document.createElement('div');
-            highlightDiv.className = "amber-highlight--item";
-            highlightDiv.style.top = top + 'px';
-            highlightDiv.style.left = left + 'px';
-            highlightDiv.style.width = width + 'px';
-            return highlightDiv;
-        };
-
-        if (startDom && endDom) {
+        if (where) {
             const amberContainer = document.getElementById("amber-highlight--group");
             if (!amberContainer) return;
-
-            const startContext = startDom.firstChild;
-            const endContext = endDom.firstChild;
-            if (!startContext || !endContext) return;
-
-            const range = document.createRange();
-            const editorRect = document.getElementsByClassName('toastui-editor md-mode')[0]!.getBoundingClientRect();
-
-            let sliderStartOffset = startOffset - 1;
-            let sliderEndOffset = startOffset;
-
-            while (sliderEndOffset <= endOffset - 1) {
-                range.setStart(startContext, sliderStartOffset);
-                range.setEnd(startContext, sliderEndOffset);
-                const rect = range.getBoundingClientRect();
-
-                // 如果跨行
-                if (rect.height > 27) {
-                    const lastRange = document.createRange();
-                    lastRange.setStart(startContext, sliderStartOffset);
-                    lastRange.setEnd(startContext, sliderEndOffset - 1);
-                    const lastRect = lastRange.getBoundingClientRect();
-                    amberContainer.appendChild(
-                        createHighlight(lastRect.top - editorRect.top - 3,
-                            lastRect.left - editorRect.left,
-                            lastRect.width)
-                    );
-                    // 滑动左端点到下一行
-                    sliderStartOffset = sliderEndOffset - 1;
-                }
-                sliderEndOffset++;
+            const raw = {
+                elem: where,
+                index: {
+                    start: startOffset - 1,
+                    end: endOffset - 1,
+                },
             }
-
-            // 为最后的部分创建高亮
-            const finalRect = range.getBoundingClientRect();
-            amberContainer.appendChild(
-                createHighlight(finalRect.top - editorRect.top - 3,
-                    finalRect.left - editorRect.left,
-                    finalRect.width)
-            );
+            const editorRect = document.getElementsByClassName('toastui-editor md-mode')[0]!.getBoundingClientRect();
+            // 定义滑动窗口
+            const slider = {
+                left: raw.index.start,       // 左指针
+                right: raw.index.start + 1,  // 右指针
+            }
+            let range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+            if (!range) return;
+            while (slider.right !== raw.index.end) {
+                const rect: DOMRect = range.getBoundingClientRect();
+                // slider.right已经移动到了下一行
+                if (rect.height > 27) {
+                    const lastRange = createRangeFromOffsets(raw.elem, slider.left, slider.right - 1);
+                    if (!lastRange) return;
+                    const lastRect: DOMRect = lastRange.getBoundingClientRect();
+                    amberContainer.appendChild(createHighlight(lastRect.top - editorRect.top - 3, lastRect.left - editorRect.left, lastRect.width));
+                    slider.left = slider.right - 1; // 将左指针也移动到下一行
+                }
+                slider.right++; // 指针推进
+                range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+                if (!range) return;
+            }
+            range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+            if (!range) return;
+            const rect: DOMRect = range.getBoundingClientRect();
+            amberContainer.appendChild(createHighlight(rect.top - editorRect.top - 3, rect.left - editorRect.left, rect.width));
         }
     }
+}
+
+function createRangeFromOffsets(div: Element, startOffset: number, endOffset: number): Range | null {
+    let currentOffset: number = 0;
+    let startNode: any = null;
+    let endNode: any = null;
+    let startNodeOffset: number = 0;
+    let endNodeOffset: number = 0;
+    function traverse(node: any): true | undefined {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const textLength = node.nodeValue.length;
+            if (!startNode && currentOffset + textLength > startOffset) {
+                startNode = node;
+                startNodeOffset = startOffset - currentOffset;
+            }
+            currentOffset += textLength;
+            if (!endNode && currentOffset >= endOffset) {
+                endNode = node;
+                endNodeOffset = endOffset - currentOffset + textLength;
+                return true;  // Return true to signal that we're done
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            for (let child of node.childNodes) {
+                const done = traverse(child);
+                if (done) return true;  // If endNode is found, exit early.
+            }
+        }
+    }
+    traverse(div);
+    if (startNode && endNode) {
+        const range = document.createRange();
+        range.setStart(startNode, startNodeOffset);
+        range.setEnd(endNode, endNodeOffset);
+        return range;
+    }
+    return null;
+}
+
+function createHighlight(top: number, left: number, width: number) {
+    const highlightDiv = document.createElement('div');
+    highlightDiv.className = "amber-highlight--item";
+    highlightDiv.style.top = top + 'px';
+    highlightDiv.style.left = left + 'px';
+    highlightDiv.style.width = width + 'px';
+    return highlightDiv;
 }
