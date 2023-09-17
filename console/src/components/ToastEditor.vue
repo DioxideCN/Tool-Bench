@@ -46,8 +46,8 @@
                     </div>
                     <span class="amber-popup--result">{{ searchResult.total === 0 ? '无结果' : ('第 ' + searchResult.hoverOn + ' 项, 共 ' + searchResult.total) + ' 项' }}</span>
                     <div class="amber-popup--btn">
-                        <i class="fa-solid fa-arrow-up amber-popup--last disable"></i>
-                        <i class="fa-solid fa-arrow-down amber-popup--next disable"></i>
+                        <i :class="searchResult.total === 0 ? 'disable' : ''" class="fa-solid fa-arrow-up amber-popup--last" @click="locateSearchResultAt(false)"></i>
+                        <i :class="searchResult.total === 0 ? 'disable' : ''" class="fa-solid fa-arrow-down amber-popup--next" @click="locateSearchResultAt(true)"></i>
                         <i class="fa-solid fa-xmark amber-popup--close" @click="openSearch()"></i>
                     </div>
                 </div>
@@ -157,7 +157,56 @@ function switchSearchCondition2(): void {
 const searchResult = ref({
     total: 0,
     hoverOn: 0,
+    list: [],
 });
+// 定位最近的搜索结果
+function highlightResult(arr: number[]) {
+    if (searchCondition.value.regular) {
+        SearchUtil.highlightSelection(arr[0], arr[1], arr[2], arr[3]);
+    } else {
+        SearchUtil.highlightSelection(arr[0], arr[1], arr[0], arr[1] + (document.getElementById("amber-search--input") as HTMLInputElement).value!.length);
+    }
+}
+function locateSearchResultAt(isDown: boolean): void {
+    if (searchResult.value.total === 0) return;
+    const length = searchResult.value.list.length;
+    const searchLength = searchCondition.value.regular
+                        ? searchResult.value.list[0][3] - searchResult.value.list[0][1]
+                        : (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
+    let awaitArr: number[] = [];
+    let selectedIndex = isDown ? length - 1 : 0;
+    for (let index = 0; index < length; index++) {
+        const row = searchResult.value.list[index];
+        const diffRow = row[0] - focusRow.value; // 行间距
+        const diffCol = row[1] - focusCol.value; // 列间距
+        // 将第一次遍历到的行差>=0的元素作为候选
+        if (diffRow >= 0) {
+            // 如果行差=0选择第一个遍历到的列差>0的元素作为候选
+            if (diffRow === 0) {
+                if (!isDown && diffCol < 0 && Math.abs(diffCol) > searchLength) continue;
+                if (isDown && diffCol < 0 && Math.abs(diffCol) >= searchLength) continue;
+                let target = index;
+                if (!isDown) target--;
+                if (target < 0) target = length - 1;
+                awaitArr = searchResult.value.list[target];
+                selectedIndex = target;
+                break;
+            } else {
+                // 候选必然是下一个，候选的前驱节点必然是上一个
+                let target = index;
+                if (!isDown) target--;
+                if (target < 0) target = length - 1;
+                selectedIndex = target;
+                awaitArr = searchResult.value.list[target];
+                break;
+            }
+        }
+        selectedIndex = 0;
+        awaitArr = searchResult.value.list[selectedIndex];
+    }
+    highlightResult(awaitArr);
+    searchResult.value.hoverOn = selectedIndex + 1;
+}
 
 onMounted(async () => {
     // 初始化Toast编辑器
@@ -367,7 +416,12 @@ onMounted(async () => {
             }
             return;
         }
-        const value: string = (document.getElementById("amber-search--input") as HTMLInputElement).value!;
+        let value: string = (document.getElementById("amber-search--input") as HTMLInputElement).value!;
+        // 快速复制选中内容到查询框
+        if (value.length === 0) {
+            value = window.getSelection()!.toString();
+            (document.getElementById("amber-search--input") as HTMLInputElement).value = value;
+        }
         if (!searchCondition.value.regular) {
             // 纯文本内容查询
             const { total, markList } = SearchUtil.text(instance.getMarkdown(), value, searchCondition.value.capitalization);
@@ -450,6 +504,10 @@ onMounted(async () => {
         const focusText = instance.getSelectedText();
         // 更新统计
         const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
+        if (characterCount.value !== _characterCount) {
+            // 更新搜索内容
+            doSearch();
+        }
         wordCount.value = _wordCount;
         characterCount.value = _characterCount;
         selectCount.value = ContextUtil.Line.countSelect(focusText);
@@ -457,8 +515,8 @@ onMounted(async () => {
         focusCol.value = (selection as [number[], number[]])[1][1];
         // 更新行
         const getter = ContextUtil.Line.count(mdEditor, selection, prevIndexMap, oldLineCount);
-        prevIndexMap = getter.prevIndexMap; // 更新空行补齐的集合
-        oldLineCount = getter.oldLineCount; // 更新总行数
+        prevIndexMap = getter.prevIndexMap;       // 更新空行补齐的集合
+        oldLineCount = getter.oldLineCount;       // 更新总行数
         const fragment = getter.newLineContainer; // 更新行容器
         if (fragment) {
             lineNumberDOM.innerHTML = '';
@@ -473,8 +531,6 @@ onMounted(async () => {
                 emit("update", markdown);
             }
         }
-        // 尝试更新搜索内容
-        doSearch();
     }
     useUpdate();
     // 事件更新驱动
@@ -489,7 +545,8 @@ onMounted(async () => {
 document.addEventListener('keydown', function(event) {
     if (event.ctrlKey && event.key === 'f') {
         event.preventDefault();
-        openSearch();
+        searchEnable.value = true;
+        doSearch();
     }
 });
 </script>

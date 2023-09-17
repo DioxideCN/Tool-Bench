@@ -81,6 +81,7 @@ export const SearchUtil = {
         if (total && markList) {
             searchResult.value.total = total;
             searchResult.value.hoverOn = 1;
+            searchResult.value.list = markList;
             const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
             const divs = Array.from(editorArea.children);
             if (searchCondition.value.regular) {
@@ -138,53 +139,78 @@ export const SearchUtil = {
                 left: raw.index.start,       // 左指针
                 right: raw.index.start + 1,  // 右指针
             }
-            let range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+            let range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
             if (!range) return;
             while (slider.right !== raw.index.end) {
                 const rect: DOMRect = range.getBoundingClientRect();
                 // slider.right已经移动到了下一行
                 if (rect.height > 27) {
-                    const lastRange = createRangeFromOffsets(raw.elem, slider.left, slider.right - 1);
+                    const lastRange = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right);
                     if (!lastRange) return;
                     const lastRect: DOMRect = lastRange.getBoundingClientRect();
                     amberContainer.appendChild(createHighlight(lastRect.top - editorRect.top - 3, lastRect.left - editorRect.left, lastRect.width));
                     slider.left = slider.right - 1; // 将左指针也移动到下一行
                 }
                 slider.right++; // 指针推进
-                range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+                range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
                 if (!range) return;
             }
-            range = createRangeFromOffsets(raw.elem, slider.left, slider.right);
+            range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
             if (!range) return;
             const rect: DOMRect = range.getBoundingClientRect();
             amberContainer.appendChild(createHighlight(rect.top - editorRect.top - 3, rect.left - editorRect.left, rect.width));
         }
-    }
+    },
+    highlightSelection: (startRow: number, 
+                         startIdx: number, 
+                         endRow: number, 
+                         endIdx: number) => {
+        const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
+        const divs = Array.from(editorArea.children);
+        const startRange = createRangeFromOffsets(divs[startRow - 1], startIdx, startIdx);
+        const endRange = createRangeFromOffsets(divs[endRow - 1], endIdx, endIdx);
+        if (!startRange || !endRange) return;
+        const range = document.createRange();
+        range.setStart(startRange.commonAncestorContainer, startRange.startOffset);
+        range.setEnd(endRange.commonAncestorContainer, endRange.endOffset);
+        const selection = window.getSelection();
+        if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    },
 }
 
 function createRangeFromOffsets(div: Element, startOffset: number, endOffset: number): Range | null {
-    let currentOffset: number = 0;
+    startOffset -= 1;
+    endOffset -= 1;
+
+    let currentOffset = 0;
     let startNode: any = null;
     let endNode: any = null;
-    let startNodeOffset: number = 0;
-    let endNodeOffset: number = 0;
-    function traverse(node: any): true | undefined {
+    let startNodeOffset = 0;
+    let endNodeOffset = 0;
+
+    function traverse(node: any) {
         if (node.nodeType === Node.TEXT_NODE) {
             const textLength = node.nodeValue.length;
-            if (!startNode && currentOffset + textLength > startOffset) {
+
+            if (!startNode && currentOffset + textLength >= startOffset) {
                 startNode = node;
                 startNodeOffset = startOffset - currentOffset;
             }
-            currentOffset += textLength;
+
+            currentOffset += textLength;  // Move this line up here
+
             if (!endNode && currentOffset >= endOffset) {
                 endNode = node;
-                endNodeOffset = endOffset - currentOffset + textLength;
-                return true;  // Return true to signal that we're done
+                endNodeOffset = endOffset - currentOffset + textLength;  // Adjust this to account for the movement of the currentOffset update
+                return true;
             }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             for (let child of node.childNodes) {
                 const done = traverse(child);
-                if (done) return true;  // If endNode is found, exit early.
+                if (done) return true;
             }
         }
     }
