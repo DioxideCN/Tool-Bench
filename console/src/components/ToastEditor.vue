@@ -465,10 +465,6 @@ onMounted(async () => {
         const focusText = instance.getSelectedText();
         // 更新统计
         const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
-        if (characterCount.value !== _characterCount) {
-            // 更新搜索内容
-            doSearch();
-        }
         wordCount.value = _wordCount;
         characterCount.value = _characterCount;
         selectCount.value = ContextUtil.Line.countSelect(focusText);
@@ -477,6 +473,11 @@ onMounted(async () => {
         // 更新行
         const getter = ContextUtil.Line.count(mdEditor, selection, prevIndexMap, oldLineCount);
         prevIndexMap = getter.prevIndexMap;       // 更新空行补齐的集合
+        if (characterCount.value !== _characterCount || 
+            oldLineCount !== getter.oldLineCount) {
+            // 更新搜索内容
+            doSearch();
+        }
         oldLineCount = getter.oldLineCount;       // 更新总行数
         const fragment = getter.newLineContainer; // 更新行容器
         if (fragment) {
