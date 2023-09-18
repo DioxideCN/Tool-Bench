@@ -167,46 +167,7 @@ function highlightResult(arr: number[]) {
         SearchUtil.highlightSelection(arr[0], arr[1], arr[0], arr[1] + (document.getElementById("amber-search--input") as HTMLInputElement).value!.length);
     }
 }
-function locateSearchResultAt(isDown: boolean): void {
-    if (searchResult.value.total === 0) return;
-    const length = searchResult.value.list.length;
-    const searchLength = searchCondition.value.regular
-                        ? searchResult.value.list[0][3] - searchResult.value.list[0][1]
-                        : (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
-    let awaitArr: number[] = [];
-    let selectedIndex = isDown ? length - 1 : 0;
-    for (let index = 0; index < length; index++) {
-        const row = searchResult.value.list[index];
-        const diffRow = row[0] - focusRow.value; // 行间距
-        const diffCol = row[1] - focusCol.value; // 列间距
-        // 将第一次遍历到的行差>=0的元素作为候选
-        if (diffRow >= 0) {
-            // 如果行差=0选择第一个遍历到的列差>0的元素作为候选
-            if (diffRow === 0) {
-                if (!isDown && diffCol < 0 && Math.abs(diffCol) > searchLength) continue;
-                if (isDown && diffCol < 0 && Math.abs(diffCol) >= searchLength) continue;
-                let target = index;
-                if (!isDown) target--;
-                if (target < 0) target = length - 1;
-                awaitArr = searchResult.value.list[target];
-                selectedIndex = target;
-                break;
-            } else {
-                // 候选必然是下一个，候选的前驱节点必然是上一个
-                let target = index;
-                if (!isDown) target--;
-                if (target < 0) target = length - 1;
-                selectedIndex = target;
-                awaitArr = searchResult.value.list[target];
-                break;
-            }
-        }
-        selectedIndex = 0;
-        awaitArr = searchResult.value.list[selectedIndex];
-    }
-    highlightResult(awaitArr);
-    searchResult.value.hoverOn = selectedIndex + 1;
-}
+let locateSearchResultAt = (isDown: boolean) => {};
 
 onMounted(async () => {
     // 初始化Toast编辑器
@@ -540,6 +501,73 @@ onMounted(async () => {
     ContextUtil.onResize(mdEditor, useUpdate, doSearch);
     // 渲染代码块
     renderCodeBlock();
+    
+    locateSearchResultAt = (isDown: boolean): void => {
+        if (searchResult.value.total === 0) return;
+        const length = searchResult.value.list.length;
+        const fixLength = (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
+        let awaitArr: number[] = [];
+        let selectedIndex = isDown ? length - 1 : 0;
+        for (let index = 0; index < length; index++) {
+            const selection = instance.getSelection();
+            const searchLength = searchCondition.value.regular
+                ? searchResult.value.list[index][3] - searchResult.value.list[index][1] : fixLength;
+            const row = searchResult.value.list[index];
+            let diffRow: number = row[0]; // 行间距
+            let diffCol: number = row[1]; // 列间距
+            // 如果是正则的向上查找并且row[0]和row[2]不相同
+            // 那么focusRow和focusCol应该通过window.getSelection()来重新定位起始位置
+            let rowToSubtract = focusRow.value;
+            let colToSubtract = focusCol.value;
+            if (!isDown && (row[0] !== row[2]) && searchCondition.value.regular) {
+                rowToSubtract = (selection as [number[], number[]])[0][0];
+                colToSubtract = (selection as [number[], number[]])[0][1];
+            }
+            diffRow -= rowToSubtract;
+            diffCol -= colToSubtract;
+            // 将第一次遍历到的行差>=0的元素作为候选
+            if (diffRow >= 0) {
+                // 如果行差=0选择第一个遍历到的列差>0的元素作为候选
+                if (diffRow === 0) {
+                    if ((!isDown && diffCol < 0 && Math.abs(diffCol) > searchLength) || (isDown && diffCol < 0 && Math.abs(diffCol) >= searchLength)) {
+                        continue;
+                    }
+                    let target = index;
+                    if (!isDown) {
+                        target--;
+                    }
+                    if (target < 0) {
+                        target = length - 1;
+                    }
+                    awaitArr = searchResult.value.list[target];
+                    selectedIndex = target;
+                    break;
+                } else {
+                    // 候选必然是下一个，候选的前驱节点必然是上一个
+                    let target = index;
+                    if (!isDown) {
+                        target--;
+                    }
+                    if (target < 0) {
+                        target = length - 1;
+                    }
+                    selectedIndex = target;
+                    awaitArr = searchResult.value.list[target];
+                    break;
+                }
+            }
+        }
+        if (awaitArr.length === 0) {
+            if (isDown) {
+                selectedIndex = 0;
+            } else {
+                selectedIndex = length - 1;
+            }
+            awaitArr = searchResult.value.list[selectedIndex];
+        }
+        searchResult.value.hoverOn = selectedIndex + 1;
+        highlightResult(awaitArr);
+    }
 });
 
 document.addEventListener('keydown', function(event) {

@@ -383,6 +383,7 @@ function extractHeight(occupied, width, height) {
                         page: +(this.getAttribute("page") || "1"),
                         width: this.getAttribute("width") || "100%",
                         height: this.getAttribute("height") || "500px",
+                        autoplay: this.getAttribute("autoplay") || 1,
                     };
                     this.render();
                 }
@@ -391,7 +392,7 @@ function extractHeight(occupied, width, height) {
                     const realHeight = extractHeight(this.parentElement.offsetWidth, this.options.width, this.options.height);
                     this.setAttribute("height", realHeight);
                     this.innerHTML = `
-                        <iframe class="iframe-dom" allowfullscreen="true" scrolling="no" border="0" frameborder="no" framespacing="0" class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width}; height:${realHeight}px;"></iframe>`;
+                        <iframe class="iframe-dom" allowfullscreen="true" scrolling="no" border="0" frameborder="no" framespacing="0" autoplay=${this.options.autoplay}  class="tool_vplayer" src="//player.bilibili.com/player.html?bvid=${this.options.bvid}&page=${this.options.page}" style="width:${this.options.width}; height:${realHeight}px;"></iframe>`;
                 }
             }
         );

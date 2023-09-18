@@ -185,6 +185,13 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
     startOffset -= 1;
     endOffset -= 1;
 
+    if (div.nodeType === Node.ELEMENT_NODE && !div.childNodes.length && startOffset === 0 && endOffset === 0) {
+        const range = document.createRange();
+        range.setStart(div, 0);
+        range.setEnd(div, 0);
+        return range;
+    }
+
     let currentOffset = 0;
     let startNode: any = null;
     let endNode: any = null;
@@ -194,33 +201,41 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
     function traverse(node: any) {
         if (node.nodeType === Node.TEXT_NODE) {
             const textLength = node.nodeValue.length;
-
             if (!startNode && currentOffset + textLength >= startOffset) {
                 startNode = node;
                 startNodeOffset = startOffset - currentOffset;
             }
-
-            currentOffset += textLength;  // Move this line up here
-
+            currentOffset += textLength;
             if (!endNode && currentOffset >= endOffset) {
                 endNode = node;
-                endNodeOffset = endOffset - currentOffset + textLength;  // Adjust this to account for the movement of the currentOffset update
+                endNodeOffset = endOffset - currentOffset + textLength;
                 return true;
             }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.previousSibling === null && startOffset === 0 && endOffset === 0) {
+                startNode = node.parentNode;
+                endNode = node.parentNode;
+                startNodeOffset = Array.from(node.parentNode.childNodes).indexOf(node);
+                endNodeOffset = startNodeOffset;
+                return true;
+            }
+
             for (let child of node.childNodes) {
                 const done = traverse(child);
                 if (done) return true;
             }
         }
     }
+
     traverse(div);
+
     if (startNode && endNode) {
         const range = document.createRange();
         range.setStart(startNode, startNodeOffset);
         range.setEnd(endNode, endNodeOffset);
         return range;
     }
+
     return null;
 }
 
