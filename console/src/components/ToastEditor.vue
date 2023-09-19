@@ -140,6 +140,7 @@ function renderCodeBlock() {
 // 执行查询
 let doSearch = () => {};
 // 启用查询
+// TODO 压缩搜索结果避免重复唤起doSearch()
 function openSearch(): void {
     searchEnable.value = !searchEnable.value;
     doSearch();
