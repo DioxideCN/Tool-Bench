@@ -8,7 +8,7 @@
             <div class="stat-panel">
                 <div class="stat-panel--left">
                     <span class="stat-panel--key">
-                        设置
+                        <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-gear"></i>设置
                     </span>
                     <span class="stat-panel--key" @click="openSearch()">
                         <i style="position: relative;top: -1px;font-size: 12px;" class="fa-solid fa-magnifying-glass"></i>查找
@@ -140,7 +140,6 @@ function renderCodeBlock() {
 // 执行查询
 let doSearch = () => {};
 // 启用查询
-// TODO 压缩搜索结果避免重复唤起doSearch()
 function openSearch(): void {
     searchEnable.value = !searchEnable.value;
     doSearch();
@@ -569,6 +568,31 @@ onMounted(async () => {
         }
         searchResult.value.hoverOn = selectedIndex + 1;
         highlightResult(awaitArr);
+    }
+
+    // @ts-ignore
+    const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0];
+    // @ts-ignore
+    const previewElem: HTMLDivElement = document.getElementsByClassName("toastui-editor-md-preview")[0];
+    if (editorElem && previewElem) {
+        let isProgrammaticScroll = false;
+        const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
+            const scale = target.scrollHeight / source.scrollHeight;
+            const newScrollTop = source.scrollTop * scale;
+            isProgrammaticScroll = true;
+            target.scrollTop = newScrollTop;
+        }
+        editorElem.addEventListener('scroll', (event) => {
+            if (isProgrammaticScroll) return;
+            syncScroll(editorElem, previewElem);
+            setTimeout(() => { isProgrammaticScroll = false; }, 0);
+        });
+
+        previewElem.addEventListener('scroll', (event) => {
+            if (isProgrammaticScroll) return;
+            syncScroll(previewElem, editorElem);
+            setTimeout(() => { isProgrammaticScroll = false; }, 0);
+        });
     }
 });
 
