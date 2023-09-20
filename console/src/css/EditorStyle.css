@@ -664,3 +664,13 @@ pre.hljs,
     background: rgba(36, 137, 219, 0.51);
     border: 1px solid #2488db;
 }
+
+/* mermaid */
+
+.mermaid.mermaid-box { margin-top: 20px; }
+.mermaid.mermaid-box svg {
+    margin: 0 auto;
+    padding: 10px 0;
+    border-radius: 5px;
+    background: var(--code-amber-search-border);
+}

@@ -57,6 +57,7 @@
 </template>
 
 <script lang="ts" setup>
+import mermaid from 'mermaid';
 import hljs from 'highlight.js';
 import { onMounted, ref } from "vue";
 import { Editor } from "@toast-ui/editor";
@@ -64,6 +65,9 @@ import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
 
+// @ts-ignore
+window.mermaid = mermaid;
+mermaid.initialize({startOnLoad: true});
 hljs.configure({
     ignoreUnescapedHTML: true,
     throwUnescapedHTML: false,
@@ -339,29 +343,19 @@ onMounted(async () => {
         ]],
         customHTMLRenderer: {
             codeBlock(node: any) {
+                if (node.info === "mermaid") {
+                    return [
+                        { type: 'openTag', tagName: 'div', classNames: [node.info, 'mermaid-box'] },
+                        { type: 'text', content: node.literal! },
+                        { type: 'closeTag', tagName: 'div' }
+                    ];
+                }
                 return [
-                    { 
-                        type: 'openTag', 
-                        tagName: 'pre', 
-                        classNames: ['hljs', 'language-' + node.info]
-                    },
-                    { 
-                        type: 'openTag', 
-                        tagName: 'code',
-                        classNames: ['language-' + node.info]
-                    },
-                    { 
-                        type: 'text', 
-                        content: node.literal! 
-                    },
-                    { 
-                        type: 'closeTag', 
-                        tagName: 'code' 
-                    },
-                    { 
-                        type: 'closeTag', 
-                        tagName: 'pre' 
-                    }
+                    { type: 'openTag', tagName: 'pre', classNames: ['hljs', 'language-' + node.info] },
+                    { type: 'openTag', tagName: 'code', classNames: ['language-' + node.info] },
+                    { type: 'text', content: node.literal! },
+                    { type: 'closeTag', tagName: 'code' },
+                    { type: 'closeTag', tagName: 'pre' }
                 ];
             }
         },
@@ -497,7 +491,10 @@ onMounted(async () => {
     useUpdate();
     // 事件更新驱动
     instance.on('caretChange', () => { useUpdate(); });
-    instance.on('updatePreview', () => { renderCodeBlock(); })
+    instance.on('updatePreview', () => { renderCodeBlock(); });
+    instance.on('afterPreviewRender', () => {
+        mermaid.init(undefined, document.querySelectorAll('.mermaid.mermaid-box'));
+    });
     // 监听内容区域的宽度变化
     ContextUtil.onResize(mdEditor, useUpdate, doSearch);
     // 渲染代码块
