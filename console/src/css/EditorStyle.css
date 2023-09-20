@@ -226,8 +226,7 @@ span.stat-panel--key.last { margin-right: -10px; }
 .toastui-editor-defaultUI .ProseMirror {
     word-wrap: break-word;
     word-break: break-all;
-    width: calc(100% - 76px); 
-    height: 130%!important;
+    width: calc(100% - 76px);
     z-index: 1;
 }
 .toastui-editor-contents .toastui-editor-md-preview-highlight:after {
@@ -672,5 +671,20 @@ pre.hljs,
     margin: 0 auto;
     padding: 10px 0;
     border-radius: 5px;
-    background: var(--code-amber-search-border);
+    background: var(--code-amber-input-border);
+}
+.mermaid.mermaid-box svg #flowchart-pointEnd path,
+.mermaid.mermaid-box svg #arrowhead path,
+.mermaid.mermaid-box svg .edgePaths path,
+.mermaid.mermaid-box svg .cluster rect,
+.mermaid.mermaid-box svg text.messageText {
+    fill: var(--display-p)!important;
+}
+.mermaid.mermaid-box svg #flowchart-pointEnd path,
+.mermaid.mermaid-box svg #arrowhead path,
+.mermaid.mermaid-box svg .messageText,
+.mermaid.mermaid-box svg .loopText,
+.mermaid.mermaid-box svg .loopText > tspan,
+.mermaid.mermaid-box svg line {
+    stroke: var(--display-p)!important;
 }

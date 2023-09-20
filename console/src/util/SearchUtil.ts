@@ -240,9 +240,10 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
 }
 
 function createHighlight(top: number, left: number, width: number) {
+    const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0] as HTMLDivElement;
     const highlightDiv = document.createElement('div');
     highlightDiv.className = "amber-highlight--item";
-    highlightDiv.style.top = top + 'px';
+    highlightDiv.style.top = (top + editorElem.scrollTop) + 'px';
     highlightDiv.style.left = left + 'px';
     highlightDiv.style.width = width + 'px';
     return highlightDiv;

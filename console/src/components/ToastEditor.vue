@@ -72,6 +72,9 @@ hljs.configure({
     ignoreUnescapedHTML: true,
     throwUnescapedHTML: false,
 });
+function renderMermaid() {
+    mermaid.init(undefined, document.querySelectorAll('.mermaid.mermaid-box'));
+}
 
 // 编辑器主题
 function getTheme(): string {
@@ -492,9 +495,7 @@ onMounted(async () => {
     // 事件更新驱动
     instance.on('caretChange', () => { useUpdate(); });
     instance.on('updatePreview', () => { renderCodeBlock(); });
-    instance.on('afterPreviewRender', () => {
-        mermaid.init(undefined, document.querySelectorAll('.mermaid.mermaid-box'));
-    });
+    instance.on('afterPreviewRender', () => { renderMermaid(); });
     // 监听内容区域的宽度变化
     ContextUtil.onResize(mdEditor, useUpdate, doSearch);
     // 渲染代码块
@@ -567,10 +568,8 @@ onMounted(async () => {
         highlightResult(awaitArr);
     }
 
-    // @ts-ignore
-    const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0];
-    // @ts-ignore
-    const previewElem: HTMLDivElement = document.getElementsByClassName("toastui-editor-md-preview")[0];
+    const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0] as HTMLDivElement;
+    const previewElem: HTMLDivElement = document.getElementsByClassName("toastui-editor-md-preview")[0] as HTMLDivElement;
     if (editorElem && previewElem) {
         let isProgrammaticScroll = false;
         const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
@@ -579,18 +578,18 @@ onMounted(async () => {
             isProgrammaticScroll = true;
             target.scrollTop = newScrollTop;
         }
-        editorElem.addEventListener('scroll', (event) => {
+        editorElem.addEventListener('scroll', (e) => {
             if (isProgrammaticScroll) return;
             syncScroll(editorElem, previewElem);
             setTimeout(() => { isProgrammaticScroll = false; }, 0);
         });
-
-        previewElem.addEventListener('scroll', (event) => {
+        previewElem.addEventListener('scroll', (e) => {
             if (isProgrammaticScroll) return;
             syncScroll(previewElem, editorElem);
             setTimeout(() => { isProgrammaticScroll = false; }, 0);
         });
     }
+    renderMermaid();
 });
 
 document.addEventListener('keydown', function(event) {
