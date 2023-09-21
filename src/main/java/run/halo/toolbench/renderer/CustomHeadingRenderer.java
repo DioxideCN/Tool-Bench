@@ -1,4 +1,4 @@
-package run.halo.toolbench.infra;
+package run.halo.toolbench.renderer;
 
 import com.vladsch.flexmark.ast.Heading;
 import com.vladsch.flexmark.html.HtmlRenderer;

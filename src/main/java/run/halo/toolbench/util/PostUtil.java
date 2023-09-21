@@ -1,13 +1,14 @@
 package run.halo.toolbench.util;
 
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
+import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import lombok.extern.slf4j.Slf4j;
-import run.halo.toolbench.infra.CustomHeadingRenderer;
+import run.halo.toolbench.renderer.CustomHeadingRenderer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +30,11 @@ public class PostUtil {
 
     public static String fixMarkdown(String raw) {
         MutableDataSet options = new MutableDataSet();
-        options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
-        options.set(HtmlRenderer.FENCED_CODE_LANGUAGE_CLASS_PREFIX, "prism language-");
+        options.set(Parser.EXTENSIONS, Arrays.asList(
+                        TablesExtension.create(),
+                        StrikethroughExtension.create(),
+                        TaskListExtension.create()))
+                .set(HtmlRenderer.FENCED_CODE_LANGUAGE_CLASS_PREFIX, "prism language-");
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer
                 .builder(options)
