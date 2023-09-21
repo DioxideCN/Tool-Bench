@@ -20,6 +20,7 @@ specifiers:
   eslint-plugin-vue: ^9.6.0
   highlight.js: ^11.8.0
   jsdom: ^19.0.0
+  katex: ^0.16.8
   mermaid: 9.4.3
   npm-run-all: ^4.1.5
   prettier: ^2.7.1
@@ -38,6 +39,7 @@ dependencies:
   '@toast-ui/editor-plugin-code-syntax-highlight': registry.npmmirror.com/@toast-ui/editor-plugin-code-syntax-highlight/3.1.0
   echarts: registry.npmmirror.com/echarts/4.6.0
   highlight.js: registry.npmmirror.com/highlight.js/11.8.0
+  katex: registry.npmmirror.com/katex/0.16.8
   mermaid: registry.npmmirror.com/mermaid/9.4.3
   prismjs: registry.npmmirror.com/prismjs/1.29.0
   vue: 3.2.41
@@ -3318,6 +3320,13 @@ packages:
     engines: {node: '>= 10'}
     dev: false
 
+  registry.npmmirror.com/commander/8.3.0:
+    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/commander/-/commander-8.3.0.tgz}
+    name: commander
+    version: 8.3.0
+    engines: {node: '>= 12'}
+    dev: false
+
   registry.npmmirror.com/cose-base/1.0.3:
     resolution: {integrity: sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/cose-base/-/cose-base-1.0.3.tgz}
     name: cose-base
@@ -3979,6 +3988,15 @@ packages:
     name: internmap
     version: 2.0.3
     engines: {node: '>=12'}
+    dev: false
+
+  registry.npmmirror.com/katex/0.16.8:
+    resolution: {integrity: sha512-ftuDnJbcbOckGY11OO+zg3OofESlbR5DRl2cmN8HeWeeFIV7wTXvAOx8kEjZjobhA+9wh2fbKeO6cdcA9Mnovg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/katex/-/katex-0.16.8.tgz}
+    name: katex
+    version: 0.16.8
+    hasBin: true
+    dependencies:
+      commander: registry.npmmirror.com/commander/8.3.0
     dev: false
 
   registry.npmmirror.com/khroma/2.0.0:

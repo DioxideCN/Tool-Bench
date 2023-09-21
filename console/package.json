@@ -18,6 +18,7 @@
     "@toast-ui/editor-plugin-code-syntax-highlight": "^3.1.0",
     "echarts": "4.6.0",
     "highlight.js": "^11.8.0",
+    "katex": "^0.16.8",
     "mermaid": "9.4.3",
     "prismjs": "^1.29.0",
     "vue": "^3.2.41"

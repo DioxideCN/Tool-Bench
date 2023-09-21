@@ -57,6 +57,10 @@
 </template>
 
 <script lang="ts" setup>
+// @ts-ignore
+import katex from 'katex';
+// @ts-ignore
+import renderMathInElement from 'katex/contrib/auto-render/auto-render';
 import mermaid from 'mermaid';
 import hljs from 'highlight.js';
 import { onMounted, ref } from "vue";
@@ -64,6 +68,22 @@ import { Editor } from "@toast-ui/editor";
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
+
+const renderOption = {
+	delimiters: [
+		{left: '$$', right: '$$', display: true},
+		{left: '$', right: '$', display: false},
+		{left: '\\(', right: '\\)', display: false},
+		{left: '\\[', right: '\\]', display: true}
+	],
+	throwOnError : false
+}
+// 渲染Katex
+function renderKatex(dom: HTMLElement) {
+	renderMathInElement(dom, renderOption)
+}
+// @ts-ignore
+window.renderKatex = renderKatex;
 
 // @ts-ignore
 window.mermaid = mermaid;
@@ -252,6 +272,13 @@ onMounted(async () => {
                 state: 'orderedList',
             },
             {
+              name: 'tool-task',
+              tooltip: '任务列表',
+              command: 'taskList',
+              className: 'fa-solid fa-list-check',
+              state: 'taskList',
+            },
+            {
                 name: 'tool-quote',
                 tooltip: '引用',
                 command: 'blockQuote',
@@ -360,7 +387,77 @@ onMounted(async () => {
                     { type: 'closeTag', tagName: 'code' },
                     { type: 'closeTag', tagName: 'pre' }
                 ];
-            }
+            },
+            text(node: any) {
+                // 渲染latex公式
+                const content: string = node.literal;
+                const regex: RegExp = /\$(.+?)\$/g;
+                let result: any;
+                let lastIndex: number = 0;
+                const tokens: any = [];
+                while (result = regex.exec(content)) {
+                    const [match, innerContent] = result;
+                    if (lastIndex !== result.index) {
+                        tokens.push({
+                            type: 'text',
+                            content: content.slice(lastIndex, result.index),
+                        });
+                    }
+                    const span = document.createElement('span');
+                    try {
+                        katex.render(innerContent, span);
+                        // 检查渲染后的内容是否为空
+                        if (span.innerHTML.trim() !== "") {
+                            tokens.push({
+                                type: 'html',
+                                content: span.outerHTML,
+                            });
+                        } else {
+                            tokens.push({
+                                type: 'text',
+                                content: match,
+                            });
+                        }
+                    } catch (e) {
+                        // 如果渲染失败，则回退到原始文本
+                        tokens.push({
+                            type: 'text',
+                            content: match,
+                        });
+                    }
+                    lastIndex = regex.lastIndex;
+                }
+                if (lastIndex < content.length) {
+                    tokens.push({
+                        type: 'text',
+                        content: content.slice(lastIndex),
+                    });
+                }
+                return tokens;
+            },
+            latex(node: any) {
+                // 渲染块状latex
+                const raw: string = node.literal;
+                const span = document.createElement('span');
+                const tokens: any = [
+                    { type: 'openTag', tagName: 'p', classNames: ['lucency-latex'], outerNewLine: true }
+                ];
+                try {
+                    katex.render(raw, span);
+                    tokens.push({
+                        type: 'html',
+                        content: span.outerHTML,
+                    });
+                } catch (e) {
+                    span.innerText = '错误的Latex语法'
+                    tokens.push({
+                        type: 'html',
+                        content: span.outerHTML,
+                    });
+                }
+                tokens.push({ type: 'closeTag', tagName: 'p', outerNewLine: true })
+                return tokens;
+            },
         },
     });
     
@@ -572,12 +669,12 @@ onMounted(async () => {
         isProgrammaticScroll = true;
         target.scrollTop = newScrollTop;
     }
-    editorElem.addEventListener('scroll', (e) => {
+    editorElem.addEventListener('scroll', () => {
         if (isProgrammaticScroll) return;
         syncScroll(editorElem, previewElem);
         setTimeout(() => { isProgrammaticScroll = false; }, 0);
     });
-    previewElem.addEventListener('scroll', (e) => {
+    previewElem.addEventListener('scroll', () => {
         if (isProgrammaticScroll) return;
         syncScroll(previewElem, editorElem);
         setTimeout(() => { isProgrammaticScroll = false; }, 0);
@@ -602,5 +699,6 @@ document.addEventListener('keydown', function(event) {
 <style>
     @import "@toast-ui/editor/dist/toastui-editor.css";
     @import "@fortawesome/fontawesome-free/css/all.min.css";
+    @import "katex/dist/katex.min.css";
     @import "@/css/EditorStyle.css";
 </style>

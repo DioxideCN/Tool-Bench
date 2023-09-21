@@ -10,6 +10,7 @@
     --display-p: #222;
     --display-quoto: rgba(0, 0, 0, .05);
     --display-border: #eaedf0;
+    --display-odd: rgba(0,0,0,.28);
     --editor-panel-bg: #fff;
     --default-highlight: rgb(173, 214, 255);
     --popup-bg-color: #fff;
@@ -41,6 +42,7 @@
     --display-p: rgb(204, 204, 204);
     --display-quoto: rgba(110, 118, 129, 0.4);
     --display-border: #2c3135;
+    --display-odd: rgba(255,255,255,.28);
     --editor-panel-bg: rgb(24, 24, 24);
     --default-highlight: rgb(38, 79, 120);
     --popup-bg-color: #2a2a2a;
@@ -695,3 +697,10 @@ pre.hljs,
 .mermaid.mermaid-box svg line {
     stroke: var(--display-p)!important;
 }
+
+.toastui-editor-md-list-item-style.toastui-editor-md-list-item-odd {
+    color: var(--display-odd)!important;
+    font-weight: normal!important;
+}
+
+.lucency-latex { text-align: center; }
