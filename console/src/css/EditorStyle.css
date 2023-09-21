@@ -190,6 +190,8 @@ span.stat-panel--key.last { margin-right: -10px; }
 .toastui-editor-md-mode .toastui-editor-md-vertical-style { background: var(--editor-editor-left); }
 .toastui-editor-md-container .toastui-editor { background: var(--editor-editor-left); display: flex; }
 .toastui-editor-md-container .toastui-editor-md-preview {
+    padding: 0;
+    overflow: unset;
     color: var(--display-p);
     background: var(--editor-preview-bg);
 }
@@ -215,8 +217,8 @@ span.stat-panel--key.last { margin-right: -10px; }
     word-wrap: break-word;
     word-break: break-all;
     text-wrap: initial;
-    overflow-x: unset;
-    padding: 5px 0!important;
+    overflow-x: auto;
+    padding: 5px 25px!important;
 }
 
 .toastui-editor-contents > :last-child {
@@ -235,24 +237,31 @@ span.stat-panel--key.last { margin-right: -10px; }
 }
 
 .toastui-editor-md-container .toastui-editor::-webkit-scrollbar,
-.toastui-editor-md-preview::-webkit-scrollbar {
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents::-webkit-scrollbar {
     width: 10px;
 }
 .toastui-editor-md-container .toastui-editor::-webkit-scrollbar-button,
-.toastui-editor-md-preview::-webkit-scrollbar-button {
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents::-webkit-scrollbar-button {
     display: none;
 }
-.toastui-editor-md-container .toastui-editor::-webkit-scrollbar-track { background-color: var(--editor-editor-left); }
-.toastui-editor-md-preview::-webkit-scrollbar-track { background-color: var(--editor-preview-bg); }
+.toastui-editor-md-container .toastui-editor::-webkit-scrollbar-track { 
+    background-color: var(--editor-editor-left); 
+}
+.toastui-editor-md-preview::-webkit-scrollbar-track { 
+    background-color: var(--editor-preview-bg); 
+}
 .toastui-editor-md-container .toastui-editor::-webkit-scrollbar-thumb,
-.toastui-editor-md-preview::-webkit-scrollbar-thumb {
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents::-webkit-scrollbar-thumb {
     background: var(--editor-border-color);
 }
 
 .toastui-editor-defaultUI-toolbar *,
 .toastui-editor-md-container .toastui-editor,
 .toastui-editor-main .toastui-editor-md-splitter,
-.toastui-editor-md-container .toastui-editor-md-preview { transition: all .2s ease; }
+.toastui-editor-md-container .toastui-editor-md-preview,
+.toastui-editor-md-container .toastui-editor-md-preview .toastui-editor-contents { 
+    transition: all .2s ease; 
+}
 .toastui-editor-md-container .toastui-editor {
     overflow-y: auto;
     overflow-X: hidden;
@@ -496,8 +505,6 @@ ul.emoji-list li.emoji-item {
 .toastui-editor-md-custom-block { color: var(--display-p); }
 .toastui-editor-md-custom-block .toastui-editor-md-meta,
 .toastui-editor-md-custom-block .toastui-editor-md-delimiter { color: #999; }
-
-.toastui-editor-contents:last-child { margin-bottom: 20px; }
 
 /* code block reviewer */
 

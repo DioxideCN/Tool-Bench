@@ -492,10 +492,6 @@ onMounted(async () => {
         }
     }
     useUpdate();
-    // 事件更新驱动
-    instance.on('caretChange', () => { useUpdate(); });
-    instance.on('updatePreview', () => { renderCodeBlock(); });
-    instance.on('afterPreviewRender', () => { renderMermaid(); });
     // 监听内容区域的宽度变化
     ContextUtil.onResize(mdEditor, useUpdate, doSearch);
     // 渲染代码块
@@ -567,29 +563,31 @@ onMounted(async () => {
         searchResult.value.hoverOn = selectedIndex + 1;
         highlightResult(awaitArr);
     }
-
     const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0] as HTMLDivElement;
-    const previewElem: HTMLDivElement = document.getElementsByClassName("toastui-editor-md-preview")[0] as HTMLDivElement;
-    if (editorElem && previewElem) {
-        let isProgrammaticScroll = false;
-        const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
-            const scale = target.scrollHeight / source.scrollHeight;
-            const newScrollTop = source.scrollTop * scale;
-            isProgrammaticScroll = true;
-            target.scrollTop = newScrollTop;
-        }
-        editorElem.addEventListener('scroll', (e) => {
-            if (isProgrammaticScroll) return;
-            syncScroll(editorElem, previewElem);
-            setTimeout(() => { isProgrammaticScroll = false; }, 0);
-        });
-        previewElem.addEventListener('scroll', (e) => {
-            if (isProgrammaticScroll) return;
-            syncScroll(previewElem, editorElem);
-            setTimeout(() => { isProgrammaticScroll = false; }, 0);
-        });
+    const previewElem: HTMLDivElement = document.querySelectorAll(".toastui-editor-md-preview .toastui-editor-contents")[0] as HTMLDivElement;
+    let isProgrammaticScroll = false;
+    const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
+        const scale = target.scrollHeight / source.scrollHeight;
+        const newScrollTop = source.scrollTop * scale;
+        isProgrammaticScroll = true;
+        target.scrollTop = newScrollTop;
     }
+    editorElem.addEventListener('scroll', (e) => {
+        if (isProgrammaticScroll) return;
+        syncScroll(editorElem, previewElem);
+        setTimeout(() => { isProgrammaticScroll = false; }, 0);
+    });
+    previewElem.addEventListener('scroll', (e) => {
+        if (isProgrammaticScroll) return;
+        syncScroll(previewElem, editorElem);
+        setTimeout(() => { isProgrammaticScroll = false; }, 0);
+    });
     renderMermaid();
+    
+    // 事件更新驱动
+    instance.on('caretChange', () => { useUpdate(); });
+    instance.on('updatePreview', () => { renderCodeBlock(); });
+    instance.on('afterPreviewRender', () => { renderMermaid(); });
 });
 
 document.addEventListener('keydown', function(event) {
