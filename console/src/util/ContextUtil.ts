@@ -83,7 +83,13 @@ export const ContextUtil = {
                 return true;
             }
             return false;
-        }
+        },
+        createLatex: (instance: Editor): boolean => {
+            const [start] = instance.getSelection() as [number[], number[]];
+            let latexMarkdown = (start[1] === 1 ? '' : '\n') + '$$latex\n\n$$';
+            instance.replaceSelection(latexMarkdown);
+            return true;
+        },
     },
     
     Line: {

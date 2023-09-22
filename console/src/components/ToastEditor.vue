@@ -286,6 +286,12 @@ onMounted(async () => {
                 state: 'blockQuote',
             },
             {
+                name: 'tool-latexBlock',
+                tooltip: 'Latex公式',
+                command: 'latexBlock',
+                className: 'fa-solid fa-square-root-variable',
+            },
+            {
                 name: 'tool-code',
                 tooltip: '行内代码',
                 command: 'code',
@@ -449,7 +455,9 @@ onMounted(async () => {
                         content: span.outerHTML,
                     });
                 } catch (e) {
-                    span.innerText = '错误的Latex语法'
+                    span.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Wrong Latex syntax!'
+                    span.style.color = 'rgb(228, 105, 98)';
+                    span.style.fontStyle = 'italic';
                     tokens.push({
                         type: 'html',
                         content: span.outerHTML,
@@ -537,6 +545,10 @@ onMounted(async () => {
     function insertImage(alt: string, url: string): boolean {
         return ContextUtil.UseRegular.createImage(alt, url, instance);
     }
+    // 多行Latex
+    instance.addCommand('markdown', 'latexBlock', (): boolean => {
+        return ContextUtil.UseRegular.createLatex(instance);
+    });
     
     updateToolbarItem(getTheme());
     instance.addCommand('markdown', 'switchTheme', () => switchTheme());

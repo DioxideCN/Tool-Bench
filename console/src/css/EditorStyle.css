@@ -28,6 +28,7 @@
     --code-amber-input: #FFFFFF;
     --code-amber-input-border: rgba(0, 0, 0, .12);
     --code-amber-btn-disable: rgba(97, 97, 97, 0.5);
+    --code-amber-block-bg: rgba(0, 0, 0, .03);
 }
 
 [data-theme="night"] {
@@ -60,6 +61,7 @@
     --code-amber-input: #2a2a2a;
     --code-amber-input-border: rgba(255, 255, 255, .12);
     --code-amber-btn-disable: rgba(204, 204, 204, 0.5);
+    --code-amber-block-bg: rgba(255, 255, 255, .12);
 }
 
 .toast-wrapper {
@@ -680,7 +682,7 @@ pre.hljs,
     margin: 0 auto;
     padding: 10px 0;
     border-radius: 5px;
-    background: var(--code-amber-input-border);
+    background: var(--code-amber-block-bg);
 }
 .mermaid.mermaid-box svg #flowchart-pointEnd path,
 .mermaid.mermaid-box svg #arrowhead path,
