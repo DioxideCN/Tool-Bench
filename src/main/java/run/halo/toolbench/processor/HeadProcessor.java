@@ -35,20 +35,6 @@ public class HeadProcessor implements TemplateHeadProcessor {
                         .map(config -> {
                             model.add(modelFactory.createText(
                                     DomBuilder.use()
-                                            // prism
-                                            .style("/lib/prism/themes/%s".formatted(
-                                                    config.getPrism().getOrDefault("css", "prism-default.css")))
-                                            .style("/lib/prism/plugins/toolbar/prism-toolbar.min.css")
-                                            .script("/lib/prism/components/prism-core.min.js")
-                                            .script("/lib/prism/plugins/autoloader/prism-autoloader.min.js")
-                                            .script("/lib/prism/plugins/toolbar/prism-toolbar.min.js")
-                                            .script("/lib/prism/plugins/show-language/prism-show-language.min.js")
-                                            .script("/lib/prism/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js")
-                                            .style("/lib/prism/plugins/line-numbers/prism-line-numbers.min.css",
-                                                    Boolean.parseBoolean(config.getPrism().getOrDefault("lineNumber", "true")))
-                                            .script("/lib/prism/plugins/line-numbers/prism-line-numbers.min.js",
-                                                    Boolean.parseBoolean(config.getPrism().getOrDefault("lineNumber", "true")))
-                                            // tool bench
                                             .style("/css/tool-bench.css")
                                             .script("/lib/FormatterInit.js", Map.of(
                                                     "id", "formatter-init",
