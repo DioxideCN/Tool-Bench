@@ -68,25 +68,8 @@ import { Editor } from "@toast-ui/editor";
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
+import {LucenceCore} from "@/core/LucenceCore";
 
-const renderOption = {
-	delimiters: [
-		{left: '$$', right: '$$', display: true},
-		{left: '$', right: '$', display: false},
-		{left: '\\(', right: '\\)', display: false},
-		{left: '\\[', right: '\\]', display: true}
-	],
-	throwOnError : false
-}
-// 渲染Katex
-function renderKatex(dom: HTMLElement) {
-	renderMathInElement(dom, renderOption)
-}
-// @ts-ignore
-window.renderKatex = renderKatex;
-
-// @ts-ignore
-window.mermaid = mermaid;
 mermaid.initialize({startOnLoad: true});
 hljs.configure({
     ignoreUnescapedHTML: true,

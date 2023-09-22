@@ -67,6 +67,60 @@ export const SearchUtil = {
             return {};
         }
     },
+    updateHighlight: (searchResult: {
+                          total: number,
+                          hoverOn: number,
+                          list: number[] | number[][],
+                      },
+                      searchCondition: {
+                          capitalization: boolean,
+                          regular: boolean,
+                      },
+                      total: number | undefined,
+                      markList: number[][] | undefined,
+                      searchText: string) => {
+        const amberContainer = document.getElementById("amber-highlight--group");
+        if (!amberContainer) {
+            return;
+        }
+        // 清空高亮
+        amberContainer.innerHTML = "";
+        if (total && markList) {
+            searchResult.total = total;
+            searchResult.hoverOn = 1;
+            searchResult.list = markList;
+            const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
+            const divs = Array.from(editorArea.children);
+            if (searchCondition.regular) {
+                // 正则匹配 [[start_row, start_col, end_row, end_col]]
+                markList.forEach(range => {
+                    const [startRow, startCol, endRow, endCol] = range;
+                    // 如果开始行和结束行是同一行
+                    if (startRow === endRow) {
+                        const div = divs[startRow - 1];
+                        SearchUtil.renderHighlight(div, startCol, endCol);
+                    } else {
+                        // 处理开始行
+                        let startDiv = divs[startRow - 1];
+                        SearchUtil.renderHighlight(startDiv, startCol, startDiv.textContent!.length + 1);
+                        // 处理结束行
+                        let endDiv = divs[endRow - 1];
+                        SearchUtil.renderHighlight(endDiv, 1, endCol);
+                    }
+                });
+            } else {
+                // 纯文本匹配 [[start_row, start_col]] -> += searching.length
+                markList.forEach(range => {
+                    const [startRow, startCol] = range;
+                    const div = divs[startRow - 1]
+                    SearchUtil.renderHighlight(div, startCol, startCol + searchText.length);
+                })
+            }
+        } else {
+            searchResult.total = 0;
+            searchResult.hoverOn = 0;
+        }
+    },
     updateIt: (searchResult: Ref,
                searchCondition: Ref,
                total: number | undefined, 
