@@ -1,28 +1,17 @@
-import type {ToolbarItemOptions} from "@toast-ui/editor/types/ui";
-import type {Editor} from "@toast-ui/editor";
-import {PopupBuilder} from "@/util/PopupBuilder";
-import {ContextUtil} from "@/util/ContextUtil";
-import type {IPlugin} from "@/extension/IPlugin";
+import { PopupBuilder } from "@/util/PopupBuilder";
+import { ContextUtil } from "@/util/ContextUtil";
+import { AbstractPlugin } from "@/extension/BasePlugin";
+import type { PluginToolbar } from "@/extension/BasePlugin";
 
 /**
  * 这是一个最基本的为Lucence创建的插件
  */
-export class DefaultPlugin implements IPlugin {
-    
-    private readonly instance: Editor;
-    
-    constructor(instance: Editor) {
-        this.instance = instance;
-    }
-
-    private closePopup(): void {
-        this.instance.eventEmitter.emit('closePopup');
-    }
+export class DefaultPlugin extends AbstractPlugin {
 
     /**
      * 定义插件的Toolbar工具栏
      */
-    public createToolbar(): {append: 'start' | 'end', items: ToolbarItemOptions[]} {
+    public createToolbar(): PluginToolbar {
         return {
             append: 'start',
             items: [
@@ -197,7 +186,10 @@ export class DefaultPlugin implements IPlugin {
             ]
         }
     }
-    
+
+    /**
+     * 定义插件的commands
+     */
     public createCommands(): void {
         this.instance.addCommand(
             'markdown', 
@@ -206,6 +198,10 @@ export class DefaultPlugin implements IPlugin {
                 return ContextUtil.UseRegular.createLatex(this.instance);
             }
         );
+    }
+
+    private closePopup(): void {
+        this.instance.eventEmitter.emit('closePopup');
     }
 
     // 插入表情

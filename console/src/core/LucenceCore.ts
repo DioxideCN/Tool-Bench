@@ -3,20 +3,19 @@ import katex from 'katex';
 import mermaid from 'mermaid';
 import hljs from 'highlight.js';
 
+import { ref } from "vue";
 import { Editor } from "@toast-ui/editor";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
 import { DefaultPlugin } from "@/extension/DefaultPlugin";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
+import type { Ref } from "vue";
 
 export class LucenceCore {
     
-    // define editor instance
-    private readonly instance: Editor;
-    
     // define cache in core
-    private cache: CacheType = {
+    private static _cache: Ref<CacheType> = ref({
         line: {
             oldLineCount: 1,
             prevIndexMap: new Map<number, number>(),
@@ -47,16 +46,19 @@ export class LucenceCore {
             }
         },
         theme: LucenceCore.getTheme(),       // 深浅色模式
-    };
+    });
+
+    // define editor instance
+    private instance: Editor;
     
-    // define each element area in core
+    // area 依赖于 afterMounted
     private area: AreaType;
 
     /**
      * 构造器内完成对ToastUIEditor的定义
      * 这包括toolbar、自定义的渲染规则和命令注册
      */
-    constructor() {
+    constructor(rawContent: string) {
         const editorOuter: HTMLElement = 
             document.querySelector('#toast-editor') as HTMLElement;
         if (!editorOuter) {
@@ -65,18 +67,6 @@ export class LucenceCore {
         const lineNumberDOM = document.createElement('div');
         lineNumberDOM.className = 'editor-line-number';
         lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
-        this.area = {
-            // 预览区
-            preview: document.getElementsByClassName('toastui-editor-md-preview')[0]! as HTMLElement,
-            // 编辑区包括行容器和markdown编辑器
-            editor: document.getElementsByClassName('toastui-editor md-mode')[0]! as HTMLElement,
-            // 编辑区与预览区之间的分割线
-            split: document.getElementsByClassName('toastui-editor-md-splitter')[0]! as HTMLElement,
-            // markdown编辑器
-            mdEditor: document.getElementsByClassName('toastui-editor md-mode')[0].getElementsByClassName('ProseMirror')[0]! as HTMLElement,
-            // 暂不定义
-            lineBox: lineNumberDOM,
-        }
         this.instance = new Editor({
             el: editorOuter,
             previewStyle: 'vertical',
@@ -177,6 +167,19 @@ export class LucenceCore {
                 },
             },
         });
+        this.instance.setMarkdown(rawContent);
+        this.area = {
+            // 预览区
+            preview: document.getElementsByClassName('toastui-editor-md-preview')[0]! as HTMLElement,
+            // 编辑区包括行容器和markdown编辑器
+            editor: document.getElementsByClassName('toastui-editor md-mode')[0]! as HTMLElement,
+            // 编辑区与预览区之间的分割线
+            split: document.getElementsByClassName('toastui-editor-md-splitter')[0]! as HTMLElement,
+            // markdown编辑器
+            mdEditor: document.getElementsByClassName('toastui-editor md-mode')[0].getElementsByClassName('ProseMirror')[0]! as HTMLElement,
+            // 暂不定义
+            lineBox: lineNumberDOM,
+        }
     }
 
     /**
@@ -185,34 +188,82 @@ export class LucenceCore {
      * 核心实例暴露到外部。
      */
     public build(): LucenceCore {
+        // 定义编辑器实例的command
+        this.instance.addCommand(
+            'markdown', 
+            'switchTheme', 
+            () => this.toggle.theme());
         // 导入DefaultPlugin插件
         const plugin: DefaultPlugin = new DefaultPlugin(this.instance);
         plugin.createCommands(); // 初始化插件的commands
         // 通过DefaultPlugin构造Toolbar
         const { items } = plugin.createToolbar();
-        for (let i = 0; i < items.length; i++) {
+        for (let i: number = 0; i < items.length; i++) {
             this.instance.insertToolbarItem({
                 groupIndex: 0,
                 itemIndex: i,
             }, items[i])
         }
+        // 嵌入主题切换按钮
+        this.updateToolbarItem(LucenceCore.getTheme());
         const that = this;
         // 重写Ctrl+F方法来调用doSearch()
         document.addEventListener('keydown', function(event) {
             if (event.ctrlKey && event.key === 'f') {
                 event.preventDefault();
-                that.cache.feature.search.enable = true;
+                LucenceCore._cache.value.feature.search.enable = true;
                 that.doSearch();
             }
         });
         // 构建行数容器
         this.buildLineContainer();
         // 事件更新驱动
-        this.instance.on('caretChange', () => { this.useUpdate(); });
-        this.instance.on('updatePreview', () => { LucenceCore.renderCodeBlock(); });
-        this.instance.on('afterPreviewRender', () => { LucenceCore.renderMermaid(); });
+        this.instance.on('caretChange', () => {
+            this.useUpdate(); 
+        });
+        this.instance.on('updatePreview', () => { 
+            LucenceCore.renderCodeBlock(); 
+        });
+        this.instance.on('afterPreviewRender', () => { 
+            LucenceCore.renderMermaid(); 
+        });
+        // 预热
+        const mdEditor: Element = 
+            this.area.editor.getElementsByClassName('ProseMirror')[0];
+        this.useUpdate();
+        ContextUtil.onResize(
+            mdEditor, 
+            this.useUpdate.bind(this), 
+            this.doSearch.bind(this));
+        LucenceCore.renderCodeBlock();
+        this.syncScroll();
+        LucenceCore.renderMermaid();
         // 在构建成功后将instance实例暴露到全局
         return this;
+    }
+
+    /**
+     * 定义同步滚动
+     */
+    private syncScroll(): void {
+        const previewElem: HTMLDivElement = document.querySelectorAll(".toastui-editor-md-preview .toastui-editor-contents")[0] as HTMLDivElement;
+        let isProgrammaticScroll = false;
+        const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
+            const scale = target.scrollHeight / source.scrollHeight;
+            const newScrollTop = source.scrollTop * scale;
+            isProgrammaticScroll = true;
+            target.scrollTop = newScrollTop;
+        }
+        this.area.editor.addEventListener('scroll', () => {
+            if (isProgrammaticScroll) return;
+            syncScroll(this.area.editor as HTMLDivElement, previewElem);
+            setTimeout(() => { isProgrammaticScroll = false; }, 0);
+        });
+        previewElem.addEventListener('scroll', () => {
+            if (isProgrammaticScroll) return;
+            syncScroll(previewElem, this.area.editor as HTMLDivElement);
+            setTimeout(() => { isProgrammaticScroll = false; }, 0);
+        });
     }
 
     /**
@@ -236,23 +287,23 @@ export class LucenceCore {
         // 更新统计
         const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
         // 更新统计的字数、词数、选中数、聚焦行、聚焦列
-        this.cache.feature.count = {
+        LucenceCore._cache.value.feature.count = {
             words: _wordCount,
             characters: _characterCount,
             selected: ContextUtil.Line.countSelect(focusText),
         }
-        this.cache.feature.focus = {
+        LucenceCore._cache.value.feature.focus = {
             row: (selection as [number[], number[]])[1][0],
             col: (selection as [number[], number[]])[1][1],
         }
         // 更新行
         const getter = ContextUtil.Line.count(
             this.area.mdEditor, 
-            selection, 
-            this.cache.line.prevIndexMap, 
-            this.cache.line.oldLineCount);
+            selection,
+            LucenceCore._cache.value.line.prevIndexMap,
+            LucenceCore._cache.value.line.oldLineCount);
         // 更新空行补齐的集合
-        this.cache.line = {
+        LucenceCore._cache.value.line = {
             prevIndexMap: getter.prevIndexMap,
             oldLineCount: getter.oldLineCount,
         }
@@ -275,7 +326,7 @@ export class LucenceCore {
             const editorDiv = document.getElementById('toast-editor');
             if (editorDiv) {
                 const newTheme: "light" | "night" = LucenceCore.getTheme() === 'light' ? 'night' : 'light';
-                this.cache.theme = newTheme;
+                LucenceCore._cache.value.theme = newTheme;
                 localStorage.setItem('editor-theme', newTheme);
                 this.updateToolbarItem(newTheme);
                 return true;
@@ -284,36 +335,36 @@ export class LucenceCore {
         },
         // 切换预览模式
         preview: (): void => {
-            this.cache.feature.preview = 
-                !this.cache.feature.preview;
-            const displayWhat: string = 
-                this.cache.feature.preview ? '' : 'none';
+            LucenceCore._cache.value.feature.preview = 
+                !LucenceCore._cache.value.feature.preview;
+            const displayWhat: string =
+                LucenceCore._cache.value.feature.preview ? '' : 'none';
             this.area.preview.style.display = displayWhat;
             this.area.split.style.display = displayWhat;
-            this.area.editor.style.width = 
-                this.cache.feature.preview ? '50%' : '100%';
+            this.area.editor.style.width =
+                LucenceCore._cache.value.feature.preview ? '50%' : '100%';
         },
         // 切换自动保存模式
         autoSave: (): void => {
-            this.cache.feature.autoSave = 
-                !this.cache.feature.autoSave;
+            LucenceCore._cache.value.feature.autoSave = 
+                !LucenceCore._cache.value.feature.autoSave;
         },
         // 切换是否打开查询框
         search: (): void => {
-            this.cache.feature.search.enable = 
-                !this.cache.feature.search.enable;
+            LucenceCore._cache.value.feature.search.enable = 
+                !LucenceCore._cache.value.feature.search.enable;
             this.doSearch();
         },
         // 切换正则规则搜索
         regular: ():void => {
-            this.cache.feature.search.condition.regular = 
-                !this.cache.feature.search.condition.regular;
+            LucenceCore._cache.value.feature.search.condition.regular = 
+                !LucenceCore._cache.value.feature.search.condition.regular;
             this.doSearch();
         },
         // 切换大小写敏感搜索
         capitalization: ():void => {
-            this.cache.feature.search.condition.capitalization = 
-                !this.cache.feature.search.condition.capitalization;
+            LucenceCore._cache.value.feature.search.condition.capitalization = 
+                !LucenceCore._cache.value.feature.search.condition.capitalization;
             this.doSearch();
         },
     }
@@ -321,13 +372,13 @@ export class LucenceCore {
     /**
      * 执行一次查找，如果查找处于关闭状态那么清空结果和缓存，不进行查找。
      * 如果查找框内为空则从选择区域直接拷贝到查询框中作为条件进行查询。同
-     * 时根据 {@link this.cache.feature.search.condition} 和 
-     * {@link this.cache.feature.search.result} 将条件委派给 
+     * 时根据 {@link this._cache.feature.search.condition} 和 
+     * {@link this._cache.feature.search.result} 将条件委派给 
      * {@link SearchUtil#updateIt} 方法进行指定条件查找
      */
     public doSearch(): void {
         // 未启用搜索需要清空容器
-        if (!this.cache.feature.search.enable) {
+        if (!LucenceCore._cache.value.feature.search.enable) {
             const amberContainer = 
                 document.getElementById("amber-highlight--group");
             if (amberContainer) {
@@ -342,16 +393,15 @@ export class LucenceCore {
             value = window.getSelection()!.toString();
             (document.getElementById("amber-search--input") as HTMLInputElement).value = value;
         }
-        if (!this.cache.feature.search.condition.regular) {
+        if (!LucenceCore._cache.value.feature.search.condition.regular) {
             // 纯文本内容查询
             const { total, markList } = SearchUtil.text(
                 this.instance.getMarkdown(), 
                 value,
-                this.cache.feature.search.condition.capitalization);
-            // TODO 需要让SearchUtil.updateIt()方法重新适配重构后的变量
+                LucenceCore._cache.value.feature.search.condition.capitalization);
             SearchUtil.updateHighlight(
-                this.cache.feature.search.result,
-                this.cache.feature.search.condition,
+                LucenceCore._cache.value.feature.search.result,
+                LucenceCore._cache.value.feature.search.condition,
                 total,
                 markList,
                 value);
@@ -359,11 +409,10 @@ export class LucenceCore {
             const { total, markList } = SearchUtil.regex(
                 this.instance.getMarkdown(), 
                 value,
-                this.cache.feature.search.condition.capitalization);
-            // TODO 需要让SearchUtil.updateIt()方法重新适配重构后的变量
+                LucenceCore._cache.value.feature.search.condition.capitalization);
             SearchUtil.updateHighlight(
-                this.cache.feature.search.result,
-                this.cache.feature.search.condition,
+                LucenceCore._cache.value.feature.search.result,
+                LucenceCore._cache.value.feature.search.condition,
                 total,
                 markList,
                 value);
@@ -375,7 +424,7 @@ export class LucenceCore {
      * @param position 起始位置的一个4元素长度的数字型数组
      */
     public highlightResult(position: number[]): void {
-        if (this.cache.feature.search.condition.regular) {
+        if (LucenceCore._cache.value.feature.search.condition.regular) {
             SearchUtil.highlightSelection(
                 position[0], 
                 position[1], 
@@ -395,23 +444,23 @@ export class LucenceCore {
      * @param isDown 是否是向下查找
      */
     public locateSearchResultAt(isDown: boolean): void {
-        if (this.cache.feature.search.result.total === 0) return;
-        const length = this.cache.feature.search.result.list.length;
+        if (LucenceCore._cache.value.feature.search.result.total === 0) return;
+        const length = LucenceCore._cache.value.feature.search.result.list.length;
         const fixLength = (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
         let awaitArr: number[] = [];
         let selectedIndex = isDown ? length - 1 : 0;
         for (let index = 0; index < length; index++) {
             const selection = this.instance.getSelection();
             // @ts-ignore
-            const searchLength = this.cache.feature.search.condition.regular ? this.cache.feature.search.result.list[index][3] - this.cache.feature.search.result.list[index][1] : fixLength;
-            const row: number[] = this.cache.feature.search.result.list[index] as number[];
+            const searchLength = this._cache.feature.search.condition.regular ? this._cache.feature.search.result.list[index][3] - this._cache.feature.search.result.list[index][1] : fixLength;
+            const row: number[] = LucenceCore._cache.value.feature.search.result.list[index] as number[];
             let diffRow: number = row[0]; // 行间距
             let diffCol: number = row[1]; // 列间距
             // 如果是正则的向上查找并且row[0]和row[2]不相同
             // 那么focusRow和focusCol应该通过window.getSelection()来重新定位起始位置
-            let rowToSubtract: number = this.cache.feature.focus.row;
-            let colToSubtract: number = this.cache.feature.focus.col;
-            if (!isDown && (row[0] !== row[2]) && this.cache.feature.search.condition.regular) {
+            let rowToSubtract: number = LucenceCore._cache.value.feature.focus.row;
+            let colToSubtract: number = LucenceCore._cache.value.feature.focus.col;
+            if (!isDown && (row[0] !== row[2]) && LucenceCore._cache.value.feature.search.condition.regular) {
                 rowToSubtract = (selection as [number[], number[]])[0][0];
                 colToSubtract = (selection as [number[], number[]])[0][1];
             }
@@ -432,7 +481,7 @@ export class LucenceCore {
                         target = length - 1;
                     }
                     // @ts-ignore
-                    awaitArr = this.cache.feature.search.result.list[target];
+                    awaitArr = this._cache.feature.search.result.list[target];
                     selectedIndex = target;
                     break;
                 } else {
@@ -446,7 +495,7 @@ export class LucenceCore {
                     }
                     selectedIndex = target;
                     // @ts-ignore
-                    awaitArr = this.cache.feature.search.result.list[target];
+                    awaitArr = this._cache.feature.search.result.list[target];
                     break;
                 }
             }
@@ -458,9 +507,9 @@ export class LucenceCore {
                 selectedIndex = length - 1;
             }
             // @ts-ignore
-            awaitArr = this.cache.feature.search.result.list[selectedIndex];
+            awaitArr = this._cache.feature.search.result.list[selectedIndex];
         }
-        this.cache.feature.search.result.hoverOn = selectedIndex + 1;
+        LucenceCore._cache.value.feature.search.result.hoverOn = selectedIndex + 1;
         this.highlightResult(awaitArr);
     }
 
@@ -478,11 +527,17 @@ export class LucenceCore {
         });
     }
     
+    static get cache(): Ref<CacheType> {
+        return LucenceCore._cache;
+    }
+
     /* 静态方法区 */
     
     static {
         // 静态初始化mermaid语法
-        mermaid.initialize({startOnLoad: true});
+        mermaid.initialize({ 
+            startOnLoad: true,
+        });
         // 静态初始化highlight.js
         hljs.configure({
             ignoreUnescapedHTML: true,
@@ -511,7 +566,6 @@ export class LucenceCore {
         mermaid.init(
             undefined,
             document.querySelectorAll('.mermaid.mermaid-box'))
-            .then(res => { })
             .catch(e => {
                 console.error(e);
             });
