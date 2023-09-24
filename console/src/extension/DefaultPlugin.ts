@@ -1,7 +1,7 @@
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 import { AbstractPlugin } from "@/extension/BasePlugin";
-import type { PluginToolbar, PluginCommand, PluginDetail} from "@/extension/ArgumentPlugin";
+import type { PluginToolbar, PluginCommand, PluginDetail } from "@/extension/ArgumentPlugin";
 
 /**
  * 这是一个最基本的为Lucence创建的插件
@@ -9,10 +9,11 @@ import type { PluginToolbar, PluginCommand, PluginDetail} from "@/extension/Argu
 export class DefaultPlugin extends AbstractPlugin {
 
     public detail: PluginDetail = {
-        name: "",
+        icon: "",
+        name: "默认插件",
         author: "DioxideCN",
-        version: "",
-        description: "",
+        version: "1.0.0",
+        description: "Lucence Editor 自带的默认插件，为编辑器提供基本的运行负载。",
     };
 
     /**

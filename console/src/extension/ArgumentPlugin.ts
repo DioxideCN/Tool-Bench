@@ -12,6 +12,7 @@ export type PluginCommand = {
 }
 
 export type PluginDetail = {
+    icon: string,
     name: string,
     author: string,
     version: string,
