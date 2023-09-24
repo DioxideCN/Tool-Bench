@@ -11,6 +11,7 @@ import { DefaultPlugin } from "@/extension/DefaultPlugin";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
+import type {PluginCommand} from "@/extension/ArgumentPlugin";
 
 export class LucenceCore {
     
@@ -195,7 +196,15 @@ export class LucenceCore {
             () => this.toggle.theme());
         // 导入DefaultPlugin插件
         const plugin: DefaultPlugin = new DefaultPlugin(this.instance);
-        plugin.createCommands(); // 初始化插件的commands
+        const commands: PluginCommand[] = plugin.createCommands();
+        // 初始化插件的commands
+        commands.forEach(cmd => {
+            this.instance.addCommand(
+                'markdown',
+                cmd.name,
+                cmd.command,
+            )
+        });
         // 通过DefaultPlugin构造Toolbar
         const { items } = plugin.createToolbar();
         for (let i: number = 0; i < items.length; i++) {

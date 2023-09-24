@@ -1,8 +1,10 @@
 import type { Editor } from "@toast-ui/editor";
-import type { ToolbarItemOptions } from "@toast-ui/editor/types/ui";
+import type {PluginCommand, PluginDetail, PluginToolbar} from "@/extension/ArgumentPlugin";
 
 export abstract class AbstractPlugin {
+    
     protected readonly instance: Editor;
+    public abstract readonly detail: PluginDetail;
 
     constructor(instance: Editor) {
         this.instance = instance;
@@ -16,10 +18,6 @@ export abstract class AbstractPlugin {
     /**
      * 创建插件需要使用到的commands
      */
-    abstract createCommands(): void;
-}
-
-export type PluginToolbar = {
-    append: 'start' | 'end',
-    items: ToolbarItemOptions[],
+    abstract createCommands(): PluginCommand[];
+    
 }

@@ -1,3 +1,5 @@
+import type {Editor} from "@toast-ui/editor";
+
 function createWrapper(type: 'link' | 'image', handler: Function): HTMLElement {
     const div = document.createElement('div');
     div.className = `${type}-wrapper`;
@@ -35,11 +37,11 @@ export const PopupBuilder = {
     /**
      * 构造弹出框DOM
      * @param title 标题
-     * @param closeAction 关闭事件
+     * @param instance 编辑器实例
      * @param domArr 内部dom组
      */
     build: (title: string, 
-            closeAction: Function, 
+            instance: Editor, 
             ...domArr: HTMLElement[]): HTMLElement => {
         // 创建最外层的包裹 div
         const wrapperDiv = document.createElement('div');
@@ -56,7 +58,9 @@ export const PopupBuilder = {
         // 创建按钮组内的 i 元素
         const btnGroupIcon = document.createElement('i');
         btnGroupIcon.className = 'fa-solid fa-xmark closable';
-        btnGroupIcon.addEventListener('click', (e) => closeAction(e))
+        btnGroupIcon.addEventListener('click', () => {
+            PopupBuilder.closePopup(instance);
+        })
         // 将标题和按钮组添加到外层 div
         btnGroupDiv.appendChild(btnGroupIcon);
         outerDivHead.appendChild(titleSpan);
@@ -72,6 +76,9 @@ export const PopupBuilder = {
         wrapperDiv.appendChild(outerDivHead);
         wrapperDiv.appendChild(outerDivContainer);
         return wrapperDiv;
+    },
+    closePopup: (instance: Editor): void => {
+        instance.eventEmitter.emit('closePopup');
     },
     
     UseRegular: {

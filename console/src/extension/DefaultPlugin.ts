@@ -1,12 +1,19 @@
 import { PopupBuilder } from "@/util/PopupBuilder";
 import { ContextUtil } from "@/util/ContextUtil";
 import { AbstractPlugin } from "@/extension/BasePlugin";
-import type { PluginToolbar } from "@/extension/BasePlugin";
+import type { PluginToolbar, PluginCommand, PluginDetail} from "@/extension/ArgumentPlugin";
 
 /**
  * 这是一个最基本的为Lucence创建的插件
  */
 export class DefaultPlugin extends AbstractPlugin {
+
+    public detail: PluginDetail = {
+        name: "",
+        author: "DioxideCN",
+        version: "",
+        description: "",
+    };
 
     /**
      * 定义插件的Toolbar工具栏
@@ -37,7 +44,7 @@ export class DefaultPlugin extends AbstractPlugin {
                             const headingElements = headings.map(({ level, text }) =>
                                 PopupBuilder.UseRegular.heading(level, text, callback)
                             );
-                            return PopupBuilder.build('标题', this.closePopup, ...headingElements,);
+                            return PopupBuilder.build('标题', this.instance, ...headingElements,);
                         })(),
                         className: 'popup-tool-heading',
                         style: {},
@@ -124,7 +131,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertTable(x, y);
                             }
                             const tableDom = PopupBuilder.UseRegular.table(callback);
-                            return PopupBuilder.build('表格', this.closePopup, tableDom);
+                            return PopupBuilder.build('表格', this.instance, tableDom);
                         })(),
                         className: 'popup-tool-table',
                         style: { width: '240px' },
@@ -141,7 +148,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertLink(alt, url);
                             }
                             const linkDom = PopupBuilder.UseRegular.link(callback);
-                            return PopupBuilder.build('链接', this.closePopup, linkDom);
+                            return PopupBuilder.build('链接', this.instance, linkDom);
                         })(),
                         className: 'popup-tool-link',
                         style: { width: '300px' },
@@ -158,7 +165,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertImage(alt, url);
                             }
                             const linkDom = PopupBuilder.UseRegular.image(callback);
-                            return PopupBuilder.build('图片', this.closePopup, linkDom);
+                            return PopupBuilder.build('图片', this.instance, linkDom);
                         })(),
                         className: 'popup-tool-image',
                         style: { width: '300px' },
@@ -177,7 +184,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 },
                                 ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','😘','😗','😙','😚','😋','😛','😝','😜','🤓','😎','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','😢','😭','😤','😠','😡','😳','😱','😨','🤗','🤔','😶','😑','😬','🙄','😯','😴','😷','🤑','😈','🤡','💩','👻','💀','👀','👣','👐','🙌','👏','🤝','👍','👎','👊','✊','🤛','🤜','🤞','✌️','🤘','👌','👈','👉','👆','👇','☝️','✋','🤚','🖐','🖖','👋','🤙','💪','🖕','✍️','🙏']
                             );
-                            return PopupBuilder.build('表情', this.closePopup, emojiElement);
+                            return PopupBuilder.build('表情', this.instance, emojiElement);
                         })(),
                         className: 'popup-tool-emoji',
                         style: {},
@@ -190,18 +197,19 @@ export class DefaultPlugin extends AbstractPlugin {
     /**
      * 定义插件的commands
      */
-    public createCommands(): void {
-        this.instance.addCommand(
-            'markdown', 
-            'latexBlock', 
-            (): boolean => {
-                return ContextUtil.UseRegular.createLatex(this.instance);
+    public createCommands(): PluginCommand[] {
+        return [
+            {
+                name: 'latexBlock',
+                command: (): boolean => {
+                    return ContextUtil.UseRegular.createLatex(this.instance);
+                }
             }
-        );
+        ]
     }
 
     private closePopup(): void {
-        this.instance.eventEmitter.emit('closePopup');
+        PopupBuilder.closePopup(this.instance);
     }
 
     // 插入表情
