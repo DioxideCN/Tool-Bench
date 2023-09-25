@@ -1,6 +1,5 @@
 package run.halo.toolbench;
 
-import jakarta.annotation.Resource;
 import org.pf4j.PluginWrapper;
 import org.springframework.stereotype.Component;
 import run.halo.app.plugin.BasePlugin;

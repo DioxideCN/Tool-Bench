@@ -1,5 +1,3 @@
-import type {Ref} from "vue";
-
 export const SearchUtil = {
     /**
      * 从context中使用searchString内容进行搜索
@@ -67,11 +65,18 @@ export const SearchUtil = {
             return {};
         }
     },
-    updateIt: (searchResult: Ref,
-               searchCondition: Ref,
-               total: number | undefined, 
-               markList: number[][] | undefined,
-               searchText: string) => {
+    updateHighlight: (searchResult: {
+                          total: number,
+                          hoverOn: number,
+                          list: number[] | number[][],
+                      },
+                      searchCondition: {
+                          capitalization: boolean,
+                          regular: boolean,
+                      },
+                      total: number | undefined,
+                      markList: number[][] | undefined,
+                      searchText: string) => {
         const amberContainer = document.getElementById("amber-highlight--group");
         if (!amberContainer) {
             return;
@@ -79,12 +84,12 @@ export const SearchUtil = {
         // 清空高亮
         amberContainer.innerHTML = "";
         if (total && markList) {
-            searchResult.value.total = total;
-            searchResult.value.hoverOn = 1;
-            searchResult.value.list = markList;
+            searchResult.total = total;
+            searchResult.hoverOn = 1;
+            searchResult.list = markList;
             const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
             const divs = Array.from(editorArea.children);
-            if (searchCondition.value.regular) {
+            if (searchCondition.regular) {
                 // 正则匹配 [[start_row, start_col, end_row, end_col]]
                 markList.forEach(range => {
                     const [startRow, startCol, endRow, endCol] = range;
@@ -110,8 +115,8 @@ export const SearchUtil = {
                 })
             }
         } else {
-            searchResult.value.total = 0;
-            searchResult.value.hoverOn = 0;
+            searchResult.total = 0;
+            searchResult.hoverOn = 0;
         }
     },
     /**
@@ -141,6 +146,7 @@ export const SearchUtil = {
             }
             let range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
             if (!range) return;
+            // 窗口迭代
             while (slider.right !== raw.index.end) {
                 const rect: DOMRect = range.getBoundingClientRect();
                 // slider.right已经移动到了下一行
@@ -157,8 +163,22 @@ export const SearchUtil = {
             }
             range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
             if (!range) return;
-            const rect: DOMRect = range.getBoundingClientRect();
-            amberContainer.appendChild(createHighlight(rect.top - editorRect.top - 3, rect.left - editorRect.left, rect.width));
+            const tempRect: DOMRect = range.getBoundingClientRect();
+            // 因为range在最后指针又向前移动了一个所以需要判断这个位置是否换行了
+            if (tempRect.height > 27) {
+                const lastRange = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right)!;
+                // 创建上一个的高亮区
+                const lastRect: DOMRect = lastRange.getBoundingClientRect();
+                amberContainer.appendChild(createHighlight(lastRect.top - editorRect.top - 3, lastRect.left - editorRect.left, lastRect.width));
+                slider.left = slider.right - 1; // 将左指针也移动到下一行
+                range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1)!;
+                // 创建换行后的下一个高亮区
+                const rect: DOMRect = range.getBoundingClientRect();
+                amberContainer.appendChild(createHighlight(rect.top - editorRect.top - 3, rect.left - editorRect.left, rect.width));
+            } else {
+                const rect: DOMRect = range.getBoundingClientRect();
+                amberContainer.appendChild(createHighlight(rect.top - editorRect.top - 3, rect.left - editorRect.left, rect.width));
+            }
         }
     },
     highlightSelection: (startRow: number, 
@@ -184,20 +204,17 @@ export const SearchUtil = {
 function createRangeFromOffsets(div: Element, startOffset: number, endOffset: number): Range | null {
     startOffset -= 1;
     endOffset -= 1;
-
     if (div.nodeType === Node.ELEMENT_NODE && !div.childNodes.length && startOffset === 0 && endOffset === 0) {
         const range = document.createRange();
         range.setStart(div, 0);
         range.setEnd(div, 0);
         return range;
     }
-
-    let currentOffset = 0;
+    let currentOffset: number = 0;
     let startNode: any = null;
     let endNode: any = null;
-    let startNodeOffset = 0;
-    let endNodeOffset = 0;
-
+    let startNodeOffset: number = 0;
+    let endNodeOffset: number = 0;
     function traverse(node: any) {
         if (node.nodeType === Node.TEXT_NODE) {
             const textLength = node.nodeValue.length;
@@ -226,16 +243,13 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
             }
         }
     }
-
     traverse(div);
-
     if (startNode && endNode) {
         const range = document.createRange();
         range.setStart(startNode, startNodeOffset);
         range.setEnd(endNode, endNodeOffset);
         return range;
     }
-
     return null;
 }
 

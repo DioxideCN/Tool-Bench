@@ -1,6 +1,6 @@
 import { definePlugin } from "@halo-dev/console-shared";
 import { markRaw } from "vue";
-import ToastEditor from "./components/ToastEditor.vue";
+import LucenceEngine from "./components/LucenceEngine.vue";
 
 export default definePlugin({
   extensionPoints: {
@@ -8,9 +8,9 @@ export default definePlugin({
     "editor:create": () => {
       return [
         {
-          name: "toasteditor",
-          displayName: "ToastEditor",
-          component: markRaw(ToastEditor),
+          name: "lucenceengine",
+          displayName: "LucenceEngine",
+          component: markRaw(LucenceEngine),
           rawType: "markdown",
         },
       ];
