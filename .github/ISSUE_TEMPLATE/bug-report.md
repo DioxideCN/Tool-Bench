@@ -1,22 +1,36 @@
 ---
 name: Bug report
-about: 提交详细的Bug Report以帮助我们改进程序
+about: Report bug to help us improve our program.
 title: ''
 labels: bug
 assignees: DioxideCN
 
 ---
 
-**问题描述**
-描述问题时请附带上您的运行环境（Halo版本、JDK版本、操作系统、服务器是国内的还是国外的）、发生错误事件、哪个模块的问题、问题发生前进行了哪些操作等。
+## Expected Behavior
+*Tell us what should happen.*
 
-**异常报错**
-如果有详细的异常报错（如：Halo的错误日志、前端控制台的报错等）请使用markdown的代码块粘贴在这里。
+## Current Behavior
+*Tell us what happens instead of the expected behavior.*
 
-**猜测原因**
-（选填）如果您猜测得到问题可能得发生的原因您可以在这里提交您的想法，这将有助于我快速定位代码，
+## Possible Solution
+*Not obligatory, but suggest a fix/reason for the bug*
 
-**屏幕截图**
-（选填）如果有肉眼可察觉的错误请将图片粘贴在这里。
+## Steps to Reproduce
+*Provide a link to a live example, or an unambiguous set of steps to reproduce this bug. Include code to reproduce, if relevant.*
 
-**其它备注**
+1.
+2.
+3.
+4.
+
+## Context (Environment)
+*How has this issue affected you? What are you trying to accomplish? Providing context helps us come up with a solution that is most useful in the real world.*
+
+*Provide a general summary of the issue in the Title above.*
+
+## Detailed Description
+*Provide a detailed description of the change or addition you are proposing.*
+
+## Possible Implementation
+*Not obligatory, but suggest an idea for implementing addition or change.*
