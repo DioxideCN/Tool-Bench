@@ -29,12 +29,11 @@ export type PluginEvent =
     "content_delete"     |
     "content_select"     |
     "content_change"     |
-    "content_cursor"     |
     // 渲染事件
-    "render_html"        |
-    "render_code"        |
     "render_latex"       |
     "render_mermaid"     |
+    "render_code"        |
+    "render_html"        |
     // 檢索事件
     "search_text"        |
     "search_regex"       |

@@ -125,6 +125,11 @@
 import { onMounted } from "vue";
 import { LucenceCore } from "@/core/LucenceCore";
 
+const emit = defineEmits<{
+    (event: "update:raw", value: string): void;
+    (event: "update:content", value: string): void;
+    (event: "update", value: string): void;
+}>();
 const props = defineProps({
     raw: {
         type: String,
@@ -140,9 +145,11 @@ const props = defineProps({
 let core: LucenceCore;
 onMounted(async () => {
     // 回显暴露的核心
-    core = new LucenceCore(props.raw).build();
-    core.on('content_change', () => {
-        
+    core = new LucenceCore(props.raw).build((): void => {
+        console.log('call content change event...');
+        emit('update:raw', core.editor.getMarkdown());
+        emit('update:content', core.editor.getMarkdown());
+        emit('update', core.editor.getMarkdown());
     });
 })
 </script>

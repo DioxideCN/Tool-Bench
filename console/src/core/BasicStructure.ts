@@ -12,7 +12,6 @@ export class PluginEventHolder {
         "content_delete"  :   new Stack<PluginEventConverter>(),
         "content_select"  :   new Stack<PluginEventConverter>(),
         "content_change"  :   new Stack<PluginEventConverter>(),
-        "content_cursor"  :   new Stack<PluginEventConverter>(),
         "render_html"     :   new Stack<PluginEventConverter>(),
         "render_code"     :   new Stack<PluginEventConverter>(),
         "render_latex"    :   new Stack<PluginEventConverter>(),
@@ -51,6 +50,8 @@ export class PluginEventHolder {
     
     // 調用所有一個類型的事件
     public callSeries(eventType: PluginEvent): void {
+        // prev condition of stack size
+        if (this.eventStacks[eventType].size() === 0) return;
         // call func
         this.eventStacks[eventType]!
             .elems()

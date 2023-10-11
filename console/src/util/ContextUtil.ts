@@ -188,7 +188,7 @@ export const ContextUtil = {
                 }
             }
             // 额外补偿8个空行
-            for (let i = 0; i < 9; i++) {
+            for (let i = 1; i < 9; i++) {
                 const indentItem = document.createElement("div");
                 indentItem.classList.add("line-item", "indent-item")
                 fragment.appendChild(indentItem);

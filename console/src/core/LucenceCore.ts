@@ -33,9 +33,9 @@ export class LucenceCore {
                     regular: false,          // 正则查找
                 },
                 result: {
-                    total: 0,
-                    hoverOn: 0,
-                    list: [],
+                    total: 0,                // 结果总数
+                    hoverOn: 0,              // 正在聚焦
+                    list: [],                // 搜索结果集
                 },
             },
             count: {
@@ -59,6 +59,9 @@ export class LucenceCore {
     
     // area 依赖于 afterMounted
     private area: AreaType;
+
+    // event holder
+    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
 
     /**
      * 构造器内完成对ToastUIEditor的定义
@@ -193,7 +196,7 @@ export class LucenceCore {
      * 方法对instance对象进行完善和补偿。并在完成构造后将该
      * 核心实例暴露到外部。
      */
-    public build(): LucenceCore {
+    public build(emitter: EventHandler): LucenceCore {
         // 定义编辑器实例的command
         this.instance.addCommand(
             'markdown', 
@@ -233,7 +236,7 @@ export class LucenceCore {
         this.buildLineContainer();
         // 事件更新驱动
         this.instance.on('caretChange', () => {
-            this.useUpdate(); 
+            this.useUpdate();
         });
         this.instance.on('updatePreview', () => { 
             LucenceCore.renderCodeBlock(); 
@@ -252,6 +255,13 @@ export class LucenceCore {
         LucenceCore.renderCodeBlock();
         this.syncScroll();
         LucenceCore.renderMermaid();
+        // 事件提交器
+        this.eventHolder.register(
+        "_system_",
+        {
+            type: "content_change",
+            callback: emitter,
+        });
         // 在构建成功后将instance实例暴露到全局
         return this;
     }
@@ -300,6 +310,10 @@ export class LucenceCore {
         const focusText: string = this.instance.getSelectedText();
         // 更新统计
         const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
+        // 从栈帧中唤醒所有文本变更事件
+        this.tryCallContentEvent(
+            LucenceCore._cache.value.feature.count.words, 
+            _wordCount);
         // 更新统计的字数、词数、选中数、聚焦行、聚焦列
         LucenceCore._cache.value.feature.count = {
             words: _wordCount,
@@ -310,7 +324,8 @@ export class LucenceCore {
             row: (selection as [number[], number[]])[1][0],
             col: (selection as [number[], number[]])[1][1],
         }
-        // 更新行
+        // 同步更新行容器
+        LucenceCore._cache.value.line.oldLineCount = this.area.lineBox.children.length - 8;
         const getter = ContextUtil.Line.count(
             this.area.mdEditor, 
             selection,
@@ -332,6 +347,28 @@ export class LucenceCore {
     }
 
     /**
+     * 根据原始字数和更新后的字数来决定需要调用那些文本变更事件，
+     * 这个过程由{@link #useUpdate}方法通过{@link this.eventHolder}自动唤起
+     * 
+     * @param rawCount 原始字数
+     * @param nowCount 更新后的字数
+     */
+    private tryCallContentEvent(rawCount: number, nowCount: number): void {
+        if (rawCount < nowCount) {
+            this.eventHolder.callSeries("content_input");
+        } else if (rawCount > nowCount) {
+            this.eventHolder.callSeries("content_delete");
+        }
+        if (rawCount === nowCount) {
+            this.eventHolder.callSeries("content_select");
+            return;
+        } else {
+            this.eventHolder.callSeries("content_change");
+            return;
+        }
+    }
+
+    /**
      * 模式切换组
      */
     public toggle = {
@@ -343,6 +380,8 @@ export class LucenceCore {
                 LucenceCore._cache.value.theme = newTheme;
                 localStorage.setItem('editor-theme', newTheme);
                 this.updateToolbarItem(newTheme);
+                // 通知主题变更观察者
+                this.eventHolder.callSeries("theme_change");
                 return true;
             }
             return false;
@@ -357,17 +396,23 @@ export class LucenceCore {
             this.area.split.style.display = displayWhat;
             this.area.editor.style.width =
                 LucenceCore._cache.value.feature.preview ? '50%' : '100%';
+            // 通知预览变更观察者
+            this.eventHolder.callSeries("switch_preview");
         },
         // 切换自动保存模式
         autoSave: (): void => {
             LucenceCore._cache.value.feature.autoSave = 
                 !LucenceCore._cache.value.feature.autoSave;
+            // 通知自动保存变更观察者
+            this.eventHolder.callSeries("switch_autosave");
         },
         // 切换是否打开查询框
         search: (): void => {
             LucenceCore._cache.value.feature.search.enable = 
                 !LucenceCore._cache.value.feature.search.enable;
             this.doSearch();
+            // 通知搜索启用变更观察者
+            this.eventHolder.callSeries("switch_search");
         },
         // 切换正则规则搜索
         regular: ():void => {
@@ -383,10 +428,10 @@ export class LucenceCore {
         },
         // 切换插件菜单页的显示
         plugin: {
-            open: () => {
+            open: (): void => {
                 LucenceCore._cache.value.plugin.enable = true;
             },
-            close: () => {
+            close: (): void => {
                 LucenceCore._cache.value.plugin.enable = false;
             }
         },
@@ -549,8 +594,6 @@ export class LucenceCore {
             className: `fa-solid fa-${theme === 'light' ? 'sun' : 'moon'}`,
         });
     }
-    
-    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
 
     /**
      * 富文本编辑器的事件调用和唤起

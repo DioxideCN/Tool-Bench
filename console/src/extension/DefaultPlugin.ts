@@ -19,7 +19,6 @@ export class DefaultPlugin extends AbstractPlugin {
     };
     
     onEnable() {
-        super.onEnable();
     }
 
     onDisable() {
