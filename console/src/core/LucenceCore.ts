@@ -11,7 +11,9 @@ import { DefaultPlugin } from "@/extension/DefaultPlugin";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
-import type {PluginCommand} from "@/extension/ArgumentPlugin";
+import type {PluginCommand, PluginEvent, EventHandler} from "@/extension/ArgumentPlugin";
+import {PluginEventHolder} from "@/core/BasicStructure";
+import type {AbstractPlugin} from "@/extension/BasePlugin";
 
 export class LucenceCore {
     
@@ -47,10 +49,13 @@ export class LucenceCore {
             }
         },
         theme: LucenceCore.getTheme(),       // 深浅色模式
+        plugin: {
+            enable: false,                   // 开启插件菜单
+        },
     });
 
     // define editor instance
-    private instance: Editor;
+    private readonly instance: Editor;
     
     // area 依赖于 afterMounted
     private area: AreaType;
@@ -195,7 +200,7 @@ export class LucenceCore {
             'switchTheme', 
             () => this.toggle.theme());
         // 导入DefaultPlugin插件
-        const plugin: DefaultPlugin = new DefaultPlugin(this.instance);
+        const plugin: DefaultPlugin = new DefaultPlugin(this);
         const commands: PluginCommand[] = plugin.createCommands();
         // 初始化插件的commands
         commands.forEach(cmd => {
@@ -289,7 +294,7 @@ export class LucenceCore {
     /**
      * 更新所有缓存
      */
-    public useUpdate() {
+    private useUpdate() {
         const selection: SelectionPos = this.instance.getSelection();
         const mdContent: string = this.instance.getMarkdown();
         const focusText: string = this.instance.getSelectedText();
@@ -376,6 +381,15 @@ export class LucenceCore {
                 !LucenceCore._cache.value.feature.search.condition.capitalization;
             this.doSearch();
         },
+        // 切换插件菜单页的显示
+        plugin: {
+            open: () => {
+                LucenceCore._cache.value.plugin.enable = true;
+            },
+            close: () => {
+                LucenceCore._cache.value.plugin.enable = false;
+            }
+        },
     }
 
     /**
@@ -383,7 +397,7 @@ export class LucenceCore {
      * 如果查找框内为空则从选择区域直接拷贝到查询框中作为条件进行查询。同
      * 时根据 {@link this._cache.feature.search.condition} 和 
      * {@link this._cache.feature.search.result} 将条件委派给 
-     * {@link SearchUtil#updateIt} 方法进行指定条件查找
+     * {@link SearchUtil#updateHighlight} 方法进行指定条件查找
      */
     public doSearch(): void {
         // 未启用搜索需要清空容器
@@ -526,7 +540,7 @@ export class LucenceCore {
      * 更新Toolbar第一个位置的主题模式切换按钮
      * @param theme 主题色，一般通过{@link #getTheme()}方法来获取
      */
-    public updateToolbarItem(theme: string) {
+    private updateToolbarItem(theme: string): void {
         this.instance.removeToolbarItem(`tool-theme-${theme === 'light' ? 'moon' : 'day'}`);
         this.instance.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
             name: `tool-theme-${theme === 'light' ? 'day' : 'moon'}`,
@@ -536,8 +550,30 @@ export class LucenceCore {
         });
     }
     
+    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
+
+    /**
+     * 富文本编辑器的事件调用和唤起
+     */
+    public on(plugin: AbstractPlugin,
+              event: PluginEvent,
+              callback: EventHandler): void {
+        // 事件类型和回调器压栈
+        this.eventHolder.register(
+            plugin.detail.name,
+            {
+                type: event,
+                callback: callback,
+            });
+    }
+    
+    // 返回缓存
     static get cache(): Ref<CacheType> {
         return LucenceCore._cache;
+    }
+    
+    get editor(): Editor {
+        return this.instance;
     }
 
     /* 静态方法区 */
@@ -558,7 +594,7 @@ export class LucenceCore {
      * 返回当前编辑器的主题色
      * @return string 'light' 浅色模式或 'dark' 深色模式
      */
-    public static getTheme(): 'light' | 'night' {
+    private static getTheme(): 'light' | 'night' {
         let theme: string | null = localStorage.getItem('editor-theme');
         if (theme !== 'light' && theme !== 'night') {
             theme = 'light';
@@ -571,7 +607,7 @@ export class LucenceCore {
     /**
      * 为所有class为".mermaid.mermaid-box"的容器渲染mermaid语法
      */
-    public static renderMermaid(): void {
+    private static renderMermaid(): void {
         mermaid.init(
             undefined,
             document.querySelectorAll('.mermaid.mermaid-box'))
@@ -583,7 +619,7 @@ export class LucenceCore {
     /**
      * 为所有class为".hljs"的容器渲染代码块
      */
-    public static renderCodeBlock(): void {
+    private static renderCodeBlock(): void {
         const elements = document.getElementsByClassName('hljs');
         for (let element of elements) {
             hljs.highlightElement(element as HTMLElement);

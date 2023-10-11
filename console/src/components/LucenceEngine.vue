@@ -1,9 +1,10 @@
 <template>
     <section :data-theme="LucenceCore.cache.value.theme"
-             class="toast-wrapper">
+             class="lucence-wrapper">
         <div id="toast-editor"></div>
+        <!-- Lucence BottomBar Module -->
         <div class="toolbar-stat-panel">
-            <div class="stat-head">
+            <div @click="core.toggle.plugin.open()" class="stat-head">
                 <i class="fa-solid fa-plug"></i>
             </div>
             <div class="stat-panel">
@@ -55,6 +56,7 @@
                 </div>
             </div>
         </div>
+        <!-- Amber Search Engine -->
         <div id="amber-popup--group" 
              class="amber-popup">
             <div class="amber-popup--search" 
@@ -93,6 +95,29 @@
                 </div>
             </div>
         </div>
+        <!-- Lucence Plugin Module -->
+        <div id="lucence-plugin--store"
+             @click="core.toggle.plugin.close()"
+             v-if="LucenceCore.cache.value.plugin.enable">
+            <div class="lucence-plugin--container"
+                 @click.stop>
+                <div class="lucence-plugin--head">
+                    <div class="plugin-head--title">插件</div>
+                    <div class="plugin-head--close">
+                        <i class="fa-solid fa-xmark closable" 
+                           @click="core.toggle.plugin.close()"></i>
+                    </div>
+                </div>
+                <div class="lucence-plugin--body">
+                    <div class="lucence-plugin--list">
+                        
+                    </div>
+                    <div class="lucence-plugin--detail">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -116,6 +141,9 @@ let core: LucenceCore;
 onMounted(async () => {
     // 回显暴露的核心
     core = new LucenceCore(props.raw).build();
+    core.on('content_change', () => {
+        
+    });
 })
 </script>
 

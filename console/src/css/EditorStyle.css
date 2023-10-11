@@ -64,11 +64,11 @@
     --code-amber-block-bg: rgba(255, 255, 255, .12);
 }
 
-.toast-wrapper {
+.lucence-wrapper {
     position: relative;
 }
 
-.toast-wrapper *::selection {
+.lucence-wrapper *::selection {
     background-color: var(--selection-color);
 }
 
@@ -706,3 +706,75 @@ pre.hljs,
 }
 
 .lucency-latex { text-align: center; }
+
+/* plugin module */
+
+#lucence-plugin--store {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999;
+    background: rgba(86,88,105,.7);
+}
+
+#lucence-plugin--store .lucence-plugin--container {
+    width: 80%;
+    height: 80%;
+    padding: 20px;
+    margin: 8% auto;
+    font-size: 20px;
+    border-radius: 5px;
+    background: rgb(32,33,35);
+}
+#lucence-plugin--store .lucence-plugin--container .lucence-plugin--head {
+    display: flex;
+    width: 100%;
+    padding: 0 6px 6px 6px;
+}
+.lucence-plugin--head .plugin-head--close,
+.lucence-plugin--head .plugin-head--title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: var(--display-p);
+}
+.lucence-plugin--head .plugin-head--title {
+    justify-content: start;
+    text-align: start;
+}
+.lucence-plugin--head .plugin-head--close {
+    justify-content: end;
+    text-align: end;
+}
+.lucence-plugin--head .plugin-head--close .closable {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+.lucence-plugin--head .plugin-head--close .closable:hover {
+    background: var(--popup-hover-bg);
+}
+.lucence-plugin--body {
+    width: 100%;
+    height: calc(100% - 40px);
+    padding-top: 6px;
+    display: flex;
+}
+.lucence-plugin--body .lucence-plugin--list {
+    flex: 0.3;
+    border: 1px solid rgb(43, 43, 43);
+    border-radius: 5px;
+}
+.lucence-plugin--body .lucence-plugin--detail {
+    flex: 0.7;
+    margin-left: 10px;
+    border: 1px solid rgb(43, 43, 43);
+    border-radius: 5px;
+}

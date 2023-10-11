@@ -4,17 +4,27 @@ import { AbstractPlugin } from "@/extension/BasePlugin";
 import type { PluginToolbar, PluginCommand, PluginDetail } from "@/extension/ArgumentPlugin";
 
 /**
- * 这是一个最基本的为Lucence创建的插件
+ * 这是一个最基本的Lucence的插件
  */
 export class DefaultPlugin extends AbstractPlugin {
 
     public detail: PluginDetail = {
         icon: "",
-        name: "默认插件",
+        name: "default_plugin",
+        display: "默认插件",
         author: "DioxideCN",
         version: "1.0.0",
         description: "Lucence Editor 自带的默认插件，为编辑器提供基本的运行负载。",
+        github: "https://github.com/DioxideCN/Tool-Bench",
     };
+    
+    onEnable() {
+        super.onEnable();
+    }
+
+    onDisable() {
+        super.onDisable();
+    }
 
     /**
      * 定义插件的Toolbar工具栏
@@ -32,7 +42,7 @@ export class DefaultPlugin extends AbstractPlugin {
                         body: (() => {
                             const callback = (level: number) => {
                                 this.closePopup();
-                                this.instance.eventEmitter.emit('command', 'heading', { level });
+                                this.core.editor.eventEmitter.emit('command', 'heading', { level });
                             }
                             const headings = [
                                 { level: 1, text: '# 一级标题' },
@@ -45,7 +55,7 @@ export class DefaultPlugin extends AbstractPlugin {
                             const headingElements = headings.map(({ level, text }) =>
                                 PopupBuilder.UseRegular.heading(level, text, callback)
                             );
-                            return PopupBuilder.build('标题', this.instance, ...headingElements,);
+                            return PopupBuilder.build('标题', this.core.editor, ...headingElements,);
                         })(),
                         className: 'popup-tool-heading',
                         style: {},
@@ -132,7 +142,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertTable(x, y);
                             }
                             const tableDom = PopupBuilder.UseRegular.table(callback);
-                            return PopupBuilder.build('表格', this.instance, tableDom);
+                            return PopupBuilder.build('表格', this.core.editor, tableDom);
                         })(),
                         className: 'popup-tool-table',
                         style: { width: '240px' },
@@ -149,7 +159,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertLink(alt, url);
                             }
                             const linkDom = PopupBuilder.UseRegular.link(callback);
-                            return PopupBuilder.build('链接', this.instance, linkDom);
+                            return PopupBuilder.build('链接', this.core.editor, linkDom);
                         })(),
                         className: 'popup-tool-link',
                         style: { width: '300px' },
@@ -166,7 +176,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 this.insertImage(alt, url);
                             }
                             const linkDom = PopupBuilder.UseRegular.image(callback);
-                            return PopupBuilder.build('图片', this.instance, linkDom);
+                            return PopupBuilder.build('图片', this.core.editor, linkDom);
                         })(),
                         className: 'popup-tool-image',
                         style: { width: '300px' },
@@ -185,7 +195,7 @@ export class DefaultPlugin extends AbstractPlugin {
                                 },
                                 ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','😘','😗','😙','😚','😋','😛','😝','😜','🤓','😎','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','😢','😭','😤','😠','😡','😳','😱','😨','🤗','🤔','😶','😑','😬','🙄','😯','😴','😷','🤑','😈','🤡','💩','👻','💀','👀','👣','👐','🙌','👏','🤝','👍','👎','👊','✊','🤛','🤜','🤞','✌️','🤘','👌','👈','👉','👆','👇','☝️','✋','🤚','🖐','🖖','👋','🤙','💪','🖕','✍️','🙏']
                             );
-                            return PopupBuilder.build('表情', this.instance, emojiElement);
+                            return PopupBuilder.build('表情', this.core.editor, emojiElement);
                         })(),
                         className: 'popup-tool-emoji',
                         style: {},
@@ -203,34 +213,34 @@ export class DefaultPlugin extends AbstractPlugin {
             {
                 name: 'latexBlock',
                 command: (): boolean => {
-                    return ContextUtil.UseRegular.createLatex(this.instance);
+                    return ContextUtil.UseRegular.createLatex(this.core.editor);
                 }
             }
         ]
     }
 
     private closePopup(): void {
-        PopupBuilder.closePopup(this.instance);
+        PopupBuilder.closePopup(this.core.editor);
     }
 
     // 插入表情
     private insertEmoji(emoji: string): boolean {
-        return ContextUtil.UseRegular.createEmoji(emoji, this.instance);
+        return ContextUtil.UseRegular.createEmoji(emoji, this.core.editor);
     }
     
     // 插入表格
     private insertTable(x: number, y: number): boolean {
-        return ContextUtil.UseRegular.createTable(x, y, this.instance);
+        return ContextUtil.UseRegular.createTable(x, y, this.core.editor);
     }
     
     // 插入超链接
     private insertLink(alt: string, url: string): boolean {
-        return ContextUtil.UseRegular.createLink(alt, url, this.instance);
+        return ContextUtil.UseRegular.createLink(alt, url, this.core.editor);
     }
     
     // 插入图片
     private insertImage(alt: string, url: string): boolean {
-        return ContextUtil.UseRegular.createImage(alt, url, this.instance);
+        return ContextUtil.UseRegular.createImage(alt, url, this.core.editor);
     }
     
 }
