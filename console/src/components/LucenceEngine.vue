@@ -102,7 +102,7 @@
             <div class="lucence-plugin--container"
                  @click.stop>
                 <div class="lucence-plugin--head">
-                    <div class="plugin-head--title">插件</div>
+                    <div class="plugin-head--title">Plugins<span>插件</span></div>
                     <div class="plugin-head--close">
                         <i class="fa-solid fa-xmark closable" 
                            @click="core.toggle.plugin.close()"></i>
@@ -110,7 +110,28 @@
                 </div>
                 <div class="lucence-plugin--body">
                     <div class="lucence-plugin--list">
-                        
+                        <div class="lucence-plugin--card"
+                             v-for="(plugin, index) in core.plugins.value" 
+                             :key="index"
+                             @click="pluginStore.activeOn=index"
+                             :class="pluginStore.activeOn===index?'active':''">
+                            <div class="left-column">
+                                <img :alt="plugin.name" 
+                                     :src="plugin.icon" 
+                                     width="80" 
+                                     height="80" />
+                            </div>
+                            <div class="right-column">
+                                <p class="plugin-info--title">
+                                    {{ plugin.display }}
+                                </p>
+                                <p class="plugin-info--simple">
+                                    版本：{{ plugin.version }}
+                                    <br>
+                                    作者：{{ plugin.author }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <div class="lucence-plugin--detail">
                         
@@ -122,7 +143,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { LucenceCore } from "@/core/LucenceCore";
 
 const emit = defineEmits<{
@@ -143,6 +164,9 @@ const props = defineProps({
     },
 });
 let core: LucenceCore;
+const pluginStore = ref({
+    activeOn: 0,
+});
 onMounted(async () => {
     // 回显暴露的核心
     core = new LucenceCore(props.raw).build((): void => {

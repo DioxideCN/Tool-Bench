@@ -7,13 +7,13 @@ import { ref } from "vue";
 import { Editor } from "@toast-ui/editor";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
-import { DefaultPlugin } from "@/extension/DefaultPlugin";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
-import type {PluginCommand, PluginEvent, EventHandler} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, EventHandler, PluginList, PluginDetail} from "@/extension/ArgumentPlugin";
 import {PluginEventHolder} from "@/core/BasicStructure";
 import type {AbstractPlugin} from "@/extension/BasePlugin";
+import {PluginResolver} from "@/core/PluginResolver";
 
 export class LucenceCore {
     
@@ -62,6 +62,9 @@ export class LucenceCore {
 
     // event holder
     private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
+    
+    // plugin resolver
+    private readonly resolver: PluginResolver;
 
     /**
      * 构造器内完成对ToastUIEditor的定义
@@ -189,6 +192,7 @@ export class LucenceCore {
             // 暂不定义
             lineBox: lineNumberDOM,
         }
+        this.resolver = new PluginResolver(this);
     }
 
     /**
@@ -202,30 +206,13 @@ export class LucenceCore {
             'markdown', 
             'switchTheme', 
             () => this.toggle.theme());
-        // 导入DefaultPlugin插件
-        const plugin: DefaultPlugin = new DefaultPlugin(this);
-        const commands: PluginCommand[] = plugin.createCommands();
-        // 初始化插件的commands
-        commands.forEach(cmd => {
-            this.instance.addCommand(
-                'markdown',
-                cmd.name,
-                cmd.command,
-            )
-        });
-        // 通过DefaultPlugin构造Toolbar
-        const { items } = plugin.createToolbar();
-        for (let i: number = 0; i < items.length; i++) {
-            this.instance.insertToolbarItem({
-                groupIndex: 0,
-                itemIndex: i,
-            }, items[i])
-        }
+        // Plugin 自动挂载所有插件
+        this.resolver.autoload();
         // 嵌入主题切换按钮
         this.updateToolbarItem(LucenceCore.getTheme());
         const that = this;
         // 重写Ctrl+F方法来调用doSearch()
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function(event: KeyboardEvent): void {
             if (event.ctrlKey && event.key === 'f') {
                 event.preventDefault();
                 LucenceCore._cache.value.feature.search.enable = true;
@@ -235,13 +222,13 @@ export class LucenceCore {
         // 构建行数容器
         this.buildLineContainer();
         // 事件更新驱动
-        this.instance.on('caretChange', () => {
+        this.instance.on('caretChange', (): void => {
             this.useUpdate();
         });
-        this.instance.on('updatePreview', () => { 
+        this.instance.on('updatePreview', (): void => { 
             LucenceCore.renderCodeBlock(); 
         });
-        this.instance.on('afterPreviewRender', () => { 
+        this.instance.on('afterPreviewRender', (): void => { 
             LucenceCore.renderMermaid(); 
         });
         // 预热
@@ -614,9 +601,13 @@ export class LucenceCore {
     static get cache(): Ref<CacheType> {
         return LucenceCore._cache;
     }
-    
+    // 编辑器实例
     get editor(): Editor {
         return this.instance;
+    }
+    // 插件列表
+    get plugins(): Ref<PluginDetail[]> {
+        return ref(this.resolver.pluginList.elems());
     }
 
     /* 静态方法区 */

@@ -1,5 +1,6 @@
 import type {ToolbarItemOptions} from "@toast-ui/editor/types/ui";
 import type {CommandFn} from "@toast-ui/editor/types/plugin";
+import type {Stack} from "@/core/BasicStructure";
 
 export type PluginToolbar = {
     append: 'start' | 'end',
@@ -21,7 +22,7 @@ export type PluginDetail = {
     github: string,
 }
 
-export type PluginList = PluginDetail[];
+export type PluginList = Stack<PluginDetail>;
 
 export type PluginEvent = 
     // 文本事件

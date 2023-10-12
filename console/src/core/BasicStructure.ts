@@ -1,4 +1,4 @@
-import type {PluginEvent, PluginEventDefinition, EventHandler, PluginEventConverter} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, PluginEventDefinition, PluginEventConverter} from "@/extension/ArgumentPlugin";
 
 type EventStackObject = {
     [K in PluginEvent]: Stack<PluginEventConverter>
@@ -28,7 +28,6 @@ export class PluginEventHolder {
     };
     
     constructor() {
-        
     }
     
     // 註冊事件
@@ -69,33 +68,54 @@ export class PluginEventHolder {
     }
 }
 
-class Stack<T> {
+export class Stack<T> {
     private items: T[] = [];
 
+    /**
+     * 压栈
+     */
     push(element: T): void {
         this.items.push(element);
     }
 
+    /**
+     * 弹栈
+     */
     pop(): T | undefined {
         return this.items.pop();
     }
 
+    /**
+     * 栈顶元素
+     */
     peek(): T | undefined {
         return this.items[this.items.length - 1];
     }
 
+    /**
+     * 是否为空栈
+     */
     isEmpty(): boolean {
         return this.items.length === 0;
     }
 
+    /**
+     * 栈大小
+     */
     size(): number {
         return this.items.length;
     }
 
+    /**
+     * 清空栈
+     */
     clear(): void {
         this.items = [];
     }
 
+    /**
+     * 转为数组
+     */
     elems(): T[] {
         return [...this.items];
     }
