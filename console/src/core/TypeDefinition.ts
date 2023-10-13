@@ -29,6 +29,9 @@ export type CacheType = {
         }
     },
     theme: 'light' | 'night',
+    plugin: {
+        enable: boolean,
+    },
 };
 
 export type AreaType = {

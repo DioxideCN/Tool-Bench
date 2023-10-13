@@ -76,8 +76,8 @@ export const SearchUtil = {
                       },
                       total: number | undefined,
                       markList: number[][] | undefined,
-                      searchText: string) => {
-        const amberContainer = document.getElementById("amber-highlight--group");
+                      searchText: string): void => {
+        const amberContainer: HTMLElement | null = document.getElementById("amber-highlight--group");
         if (!amberContainer) {
             return;
         }
@@ -87,7 +87,7 @@ export const SearchUtil = {
             searchResult.total = total;
             searchResult.hoverOn = 1;
             searchResult.list = markList;
-            const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
+            const editorArea: Element = document.getElementsByClassName('ProseMirror')[0]!;
             const divs = Array.from(editorArea.children);
             if (searchCondition.regular) {
                 // 正则匹配 [[start_row, start_col, end_row, end_col]]
@@ -95,14 +95,14 @@ export const SearchUtil = {
                     const [startRow, startCol, endRow, endCol] = range;
                     // 如果开始行和结束行是同一行
                     if (startRow === endRow) {
-                        const div = divs[startRow - 1];
+                        const div: Element = divs[startRow - 1];
                         SearchUtil.renderHighlight(div, startCol, endCol);
                     } else {
                         // 处理开始行
-                        let startDiv = divs[startRow - 1];
+                        let startDiv: Element = divs[startRow - 1];
                         SearchUtil.renderHighlight(startDiv, startCol, startDiv.textContent!.length + 1);
                         // 处理结束行
-                        let endDiv = divs[endRow - 1];
+                        let endDiv: Element = divs[endRow - 1];
                         SearchUtil.renderHighlight(endDiv, 1, endCol);
                     }
                 });
@@ -110,7 +110,7 @@ export const SearchUtil = {
                 // 纯文本匹配 [[start_row, start_col]] -> += searching.length
                 markList.forEach(range => {
                     const [startRow, startCol] = range;
-                    const div = divs[startRow - 1]
+                    const div: Element = divs[startRow - 1]
                     SearchUtil.renderHighlight(div, startCol, startCol + searchText.length);
                 })
             }
@@ -129,7 +129,7 @@ export const SearchUtil = {
                       startOffset: number,
                       endOffset: number): void => {
         if (where) {
-            const amberContainer = document.getElementById("amber-highlight--group");
+            const amberContainer: HTMLElement | null = document.getElementById("amber-highlight--group");
             if (!amberContainer) return;
             const raw = {
                 elem: where,
@@ -140,18 +140,18 @@ export const SearchUtil = {
             }
             const editorRect = document.getElementsByClassName('toastui-editor md-mode')[0]!.getBoundingClientRect();
             // 定义滑动窗口
-            const slider = {
+            const slider: {left: number, right: number} = {
                 left: raw.index.start,       // 左指针
                 right: raw.index.start + 1,  // 右指针
             }
-            let range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
+            let range: Range | null = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right + 1);
             if (!range) return;
             // 窗口迭代
             while (slider.right !== raw.index.end) {
                 const rect: DOMRect = range.getBoundingClientRect();
                 // slider.right已经移动到了下一行
                 if (rect.height > 27) {
-                    const lastRange = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right);
+                    const lastRange: Range | null = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right);
                     if (!lastRange) return;
                     const lastRect: DOMRect = lastRange.getBoundingClientRect();
                     amberContainer.appendChild(createHighlight(lastRect.top - editorRect.top - 3, lastRect.left - editorRect.left, lastRect.width));
@@ -166,7 +166,7 @@ export const SearchUtil = {
             const tempRect: DOMRect = range.getBoundingClientRect();
             // 因为range在最后指针又向前移动了一个所以需要判断这个位置是否换行了
             if (tempRect.height > 27) {
-                const lastRange = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right)!;
+                const lastRange: Range = createRangeFromOffsets(raw.elem, slider.left + 1, slider.right)!;
                 // 创建上一个的高亮区
                 const lastRect: DOMRect = lastRange.getBoundingClientRect();
                 amberContainer.appendChild(createHighlight(lastRect.top - editorRect.top - 3, lastRect.left - editorRect.left, lastRect.width));
@@ -184,16 +184,16 @@ export const SearchUtil = {
     highlightSelection: (startRow: number, 
                          startIdx: number, 
                          endRow: number, 
-                         endIdx: number) => {
+                         endIdx: number): void => {
         const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
-        const divs = Array.from(editorArea.children);
-        const startRange = createRangeFromOffsets(divs[startRow - 1], startIdx, startIdx);
-        const endRange = createRangeFromOffsets(divs[endRow - 1], endIdx, endIdx);
+        const divs: Element[] = Array.from(editorArea.children);
+        const startRange: Range | null = createRangeFromOffsets(divs[startRow - 1], startIdx, startIdx);
+        const endRange: Range | null = createRangeFromOffsets(divs[endRow - 1], endIdx, endIdx);
         if (!startRange || !endRange) return;
-        const range = document.createRange();
+        const range: Range = document.createRange();
         range.setStart(startRange.commonAncestorContainer, startRange.startOffset);
         range.setEnd(endRange.commonAncestorContainer, endRange.endOffset);
-        const selection = window.getSelection();
+        const selection: Selection | null = window.getSelection();
         if (selection) {
             selection.removeAllRanges();
             selection.addRange(range);
@@ -201,7 +201,9 @@ export const SearchUtil = {
     },
 }
 
-function createRangeFromOffsets(div: Element, startOffset: number, endOffset: number): Range | null {
+function createRangeFromOffsets(div: Element, 
+                                startOffset: number, 
+                                endOffset: number): Range | null {
     startOffset -= 1;
     endOffset -= 1;
     if (div.nodeType === Node.ELEMENT_NODE && !div.childNodes.length && startOffset === 0 && endOffset === 0) {
@@ -215,7 +217,7 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
     let endNode: any = null;
     let startNodeOffset: number = 0;
     let endNodeOffset: number = 0;
-    function traverse(node: any) {
+    function traverse(node: any): true | undefined {
         if (node.nodeType === Node.TEXT_NODE) {
             const textLength = node.nodeValue.length;
             if (!startNode && currentOffset + textLength >= startOffset) {
@@ -245,7 +247,7 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
     }
     traverse(div);
     if (startNode && endNode) {
-        const range = document.createRange();
+        const range: Range = document.createRange();
         range.setStart(startNode, startNodeOffset);
         range.setEnd(endNode, endNodeOffset);
         return range;
@@ -253,9 +255,11 @@ function createRangeFromOffsets(div: Element, startOffset: number, endOffset: nu
     return null;
 }
 
-function createHighlight(top: number, left: number, width: number) {
+function createHighlight(top: number, 
+                         left: number, 
+                         width: number): HTMLDivElement {
     const editorElem: HTMLDivElement = document.getElementsByClassName("toastui-editor md-mode")[0] as HTMLDivElement;
-    const highlightDiv = document.createElement('div');
+    const highlightDiv: HTMLDivElement = document.createElement('div');
     highlightDiv.className = "amber-highlight--item";
     highlightDiv.style.top = (top + editorElem.scrollTop) + 'px';
     highlightDiv.style.left = left + 'px';

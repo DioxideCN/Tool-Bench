@@ -7,11 +7,13 @@ import { ref } from "vue";
 import { Editor } from "@toast-ui/editor";
 import { ContextUtil } from "@/util/ContextUtil";
 import { SearchUtil } from "@/util/SearchUtil";
-import { DefaultPlugin } from "@/extension/DefaultPlugin";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
-import type {PluginCommand} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, EventHandler, PluginList, PluginDetail} from "@/extension/ArgumentPlugin";
+import {PluginEventHolder} from "@/core/BasicStructure";
+import type {AbstractPlugin} from "@/extension/BasePlugin";
+import {PluginResolver} from "@/core/PluginResolver";
 
 export class LucenceCore {
     
@@ -31,9 +33,9 @@ export class LucenceCore {
                     regular: false,          // 正则查找
                 },
                 result: {
-                    total: 0,
-                    hoverOn: 0,
-                    list: [],
+                    total: 0,                // 结果总数
+                    hoverOn: 0,              // 正在聚焦
+                    list: [],                // 搜索结果集
                 },
             },
             count: {
@@ -47,13 +49,22 @@ export class LucenceCore {
             }
         },
         theme: LucenceCore.getTheme(),       // 深浅色模式
+        plugin: {
+            enable: false,                   // 开启插件菜单
+        },
     });
 
     // define editor instance
-    private instance: Editor;
+    private readonly instance: Editor;
     
     // area 依赖于 afterMounted
     private area: AreaType;
+
+    // event holder
+    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
+    
+    // plugin resolver
+    private readonly resolver: PluginResolver;
 
     /**
      * 构造器内完成对ToastUIEditor的定义
@@ -181,6 +192,7 @@ export class LucenceCore {
             // 暂不定义
             lineBox: lineNumberDOM,
         }
+        this.resolver = new PluginResolver(this);
     }
 
     /**
@@ -188,36 +200,19 @@ export class LucenceCore {
      * 方法对instance对象进行完善和补偿。并在完成构造后将该
      * 核心实例暴露到外部。
      */
-    public build(): LucenceCore {
+    public build(emitter: EventHandler): LucenceCore {
         // 定义编辑器实例的command
         this.instance.addCommand(
             'markdown', 
             'switchTheme', 
             () => this.toggle.theme());
-        // 导入DefaultPlugin插件
-        const plugin: DefaultPlugin = new DefaultPlugin(this.instance);
-        const commands: PluginCommand[] = plugin.createCommands();
-        // 初始化插件的commands
-        commands.forEach(cmd => {
-            this.instance.addCommand(
-                'markdown',
-                cmd.name,
-                cmd.command,
-            )
-        });
-        // 通过DefaultPlugin构造Toolbar
-        const { items } = plugin.createToolbar();
-        for (let i: number = 0; i < items.length; i++) {
-            this.instance.insertToolbarItem({
-                groupIndex: 0,
-                itemIndex: i,
-            }, items[i])
-        }
+        // Plugin 自动挂载所有插件
+        this.resolver.autoload();
         // 嵌入主题切换按钮
         this.updateToolbarItem(LucenceCore.getTheme());
         const that = this;
         // 重写Ctrl+F方法来调用doSearch()
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function(event: KeyboardEvent): void {
             if (event.ctrlKey && event.key === 'f') {
                 event.preventDefault();
                 LucenceCore._cache.value.feature.search.enable = true;
@@ -227,13 +222,13 @@ export class LucenceCore {
         // 构建行数容器
         this.buildLineContainer();
         // 事件更新驱动
-        this.instance.on('caretChange', () => {
-            this.useUpdate(); 
+        this.instance.on('caretChange', (): void => {
+            this.useUpdate();
         });
-        this.instance.on('updatePreview', () => { 
+        this.instance.on('updatePreview', (): void => { 
             LucenceCore.renderCodeBlock(); 
         });
-        this.instance.on('afterPreviewRender', () => { 
+        this.instance.on('afterPreviewRender', (): void => { 
             LucenceCore.renderMermaid(); 
         });
         // 预热
@@ -247,6 +242,13 @@ export class LucenceCore {
         LucenceCore.renderCodeBlock();
         this.syncScroll();
         LucenceCore.renderMermaid();
+        // 事件提交器
+        this.eventHolder.register(
+        "_system_",
+        {
+            type: "content_change",
+            callback: emitter,
+        });
         // 在构建成功后将instance实例暴露到全局
         return this;
     }
@@ -289,12 +291,16 @@ export class LucenceCore {
     /**
      * 更新所有缓存
      */
-    public useUpdate() {
+    private useUpdate() {
         const selection: SelectionPos = this.instance.getSelection();
         const mdContent: string = this.instance.getMarkdown();
         const focusText: string = this.instance.getSelectedText();
         // 更新统计
         const { _wordCount, _characterCount } = ContextUtil.countWord(mdContent);
+        // 从栈帧中唤醒所有文本变更事件
+        this.tryCallContentEvent(
+            LucenceCore._cache.value.feature.count.words, 
+            _wordCount);
         // 更新统计的字数、词数、选中数、聚焦行、聚焦列
         LucenceCore._cache.value.feature.count = {
             words: _wordCount,
@@ -305,7 +311,8 @@ export class LucenceCore {
             row: (selection as [number[], number[]])[1][0],
             col: (selection as [number[], number[]])[1][1],
         }
-        // 更新行
+        // 同步更新行容器
+        LucenceCore._cache.value.line.oldLineCount = this.area.lineBox.children.length - 8;
         const getter = ContextUtil.Line.count(
             this.area.mdEditor, 
             selection,
@@ -327,6 +334,28 @@ export class LucenceCore {
     }
 
     /**
+     * 根据原始字数和更新后的字数来决定需要调用那些文本变更事件，
+     * 这个过程由{@link #useUpdate}方法通过{@link this.eventHolder}自动唤起
+     * 
+     * @param rawCount 原始字数
+     * @param nowCount 更新后的字数
+     */
+    private tryCallContentEvent(rawCount: number, nowCount: number): void {
+        if (rawCount < nowCount) {
+            this.eventHolder.callSeries("content_input");
+        } else if (rawCount > nowCount) {
+            this.eventHolder.callSeries("content_delete");
+        }
+        if (rawCount === nowCount) {
+            this.eventHolder.callSeries("content_select");
+            return;
+        } else {
+            this.eventHolder.callSeries("content_change");
+            return;
+        }
+    }
+
+    /**
      * 模式切换组
      */
     public toggle = {
@@ -338,6 +367,8 @@ export class LucenceCore {
                 LucenceCore._cache.value.theme = newTheme;
                 localStorage.setItem('editor-theme', newTheme);
                 this.updateToolbarItem(newTheme);
+                // 通知主题变更观察者
+                this.eventHolder.callSeries("theme_change");
                 return true;
             }
             return false;
@@ -352,17 +383,23 @@ export class LucenceCore {
             this.area.split.style.display = displayWhat;
             this.area.editor.style.width =
                 LucenceCore._cache.value.feature.preview ? '50%' : '100%';
+            // 通知预览变更观察者
+            this.eventHolder.callSeries("switch_preview");
         },
         // 切换自动保存模式
         autoSave: (): void => {
             LucenceCore._cache.value.feature.autoSave = 
                 !LucenceCore._cache.value.feature.autoSave;
+            // 通知自动保存变更观察者
+            this.eventHolder.callSeries("switch_autosave");
         },
         // 切换是否打开查询框
         search: (): void => {
             LucenceCore._cache.value.feature.search.enable = 
                 !LucenceCore._cache.value.feature.search.enable;
             this.doSearch();
+            // 通知搜索启用变更观察者
+            this.eventHolder.callSeries("switch_search");
         },
         // 切换正则规则搜索
         regular: ():void => {
@@ -376,6 +413,15 @@ export class LucenceCore {
                 !LucenceCore._cache.value.feature.search.condition.capitalization;
             this.doSearch();
         },
+        // 切换插件菜单页的显示
+        plugin: {
+            open: (): void => {
+                LucenceCore._cache.value.plugin.enable = true;
+            },
+            close: (): void => {
+                LucenceCore._cache.value.plugin.enable = false;
+            }
+        },
     }
 
     /**
@@ -383,7 +429,7 @@ export class LucenceCore {
      * 如果查找框内为空则从选择区域直接拷贝到查询框中作为条件进行查询。同
      * 时根据 {@link this._cache.feature.search.condition} 和 
      * {@link this._cache.feature.search.result} 将条件委派给 
-     * {@link SearchUtil#updateIt} 方法进行指定条件查找
+     * {@link SearchUtil#updateHighlight} 方法进行指定条件查找
      */
     public doSearch(): void {
         // 未启用搜索需要清空容器
@@ -526,7 +572,7 @@ export class LucenceCore {
      * 更新Toolbar第一个位置的主题模式切换按钮
      * @param theme 主题色，一般通过{@link #getTheme()}方法来获取
      */
-    public updateToolbarItem(theme: string) {
+    private updateToolbarItem(theme: string): void {
         this.instance.removeToolbarItem(`tool-theme-${theme === 'light' ? 'moon' : 'day'}`);
         this.instance.insertToolbarItem({ groupIndex: 0, itemIndex: 0 }, {
             name: `tool-theme-${theme === 'light' ? 'day' : 'moon'}`,
@@ -535,9 +581,33 @@ export class LucenceCore {
             className: `fa-solid fa-${theme === 'light' ? 'sun' : 'moon'}`,
         });
     }
+
+    /**
+     * 富文本编辑器的事件调用和唤起
+     */
+    public on(plugin: AbstractPlugin,
+              event: PluginEvent,
+              callback: EventHandler): void {
+        // 事件类型和回调器压栈
+        this.eventHolder.register(
+            plugin.detail.name,
+            {
+                type: event,
+                callback: callback,
+            });
+    }
     
+    // 返回缓存
     static get cache(): Ref<CacheType> {
         return LucenceCore._cache;
+    }
+    // 编辑器实例
+    get editor(): Editor {
+        return this.instance;
+    }
+    // 插件列表
+    get plugins(): Ref<PluginDetail[]> {
+        return ref(this.resolver.pluginList.elems());
     }
 
     /* 静态方法区 */
@@ -558,7 +628,7 @@ export class LucenceCore {
      * 返回当前编辑器的主题色
      * @return string 'light' 浅色模式或 'dark' 深色模式
      */
-    public static getTheme(): 'light' | 'night' {
+    private static getTheme(): 'light' | 'night' {
         let theme: string | null = localStorage.getItem('editor-theme');
         if (theme !== 'light' && theme !== 'night') {
             theme = 'light';
@@ -571,7 +641,7 @@ export class LucenceCore {
     /**
      * 为所有class为".mermaid.mermaid-box"的容器渲染mermaid语法
      */
-    public static renderMermaid(): void {
+    private static renderMermaid(): void {
         mermaid.init(
             undefined,
             document.querySelectorAll('.mermaid.mermaid-box'))
@@ -583,7 +653,7 @@ export class LucenceCore {
     /**
      * 为所有class为".hljs"的容器渲染代码块
      */
-    public static renderCodeBlock(): void {
+    private static renderCodeBlock(): void {
         const elements = document.getElementsByClassName('hljs');
         for (let element of elements) {
             hljs.highlightElement(element as HTMLElement);

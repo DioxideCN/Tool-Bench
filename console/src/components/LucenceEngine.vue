@@ -1,9 +1,10 @@
 <template>
     <section :data-theme="LucenceCore.cache.value.theme"
-             class="toast-wrapper">
+             class="lucence-wrapper">
         <div id="toast-editor"></div>
+        <!-- Lucence BottomBar Module -->
         <div class="toolbar-stat-panel">
-            <div class="stat-head">
+            <div @click="core.toggle.plugin.open()" class="stat-head">
                 <i class="fa-solid fa-plug"></i>
             </div>
             <div class="stat-panel">
@@ -55,6 +56,7 @@
                 </div>
             </div>
         </div>
+        <!-- Amber Search Engine -->
         <div id="amber-popup--group" 
              class="amber-popup">
             <div class="amber-popup--search" 
@@ -93,13 +95,119 @@
                 </div>
             </div>
         </div>
+        <!-- Lucence Plugin Module -->
+        <div id="lucence-plugin--store"
+             @click="core.toggle.plugin.close()"
+             v-if="LucenceCore.cache.value.plugin.enable">
+            <div class="lucence-plugin--container"
+                 @click.stop>
+                <div class="lucence-plugin--head">
+                    <div class="plugin-head--title">Plugins<span>插件</span></div>
+                    <div class="plugin-head--close">
+                        <i class="fa-solid fa-xmark closable" 
+                           @click="core.toggle.plugin.close()"></i>
+                    </div>
+                </div>
+                <div class="lucence-plugin--body">
+                    <div class="lucence-plugin--list">
+                        <div class="lucence-plugin--card"
+                             v-for="(plugin, index) in core.plugins.value" 
+                             :key="index"
+                             @click="pluginStore.activeOn=index"
+                             :class="pluginStore.activeOn===index?'active':''">
+                            <div class="left-column">
+                                <img :alt="plugin.name" 
+                                     :src="plugin.icon" 
+                                     width="46" 
+                                     height="46" />
+                            </div>
+                            <div class="right-column">
+                                <p class="plugin-info--title">
+                                    {{ plugin.display }}
+                                </p>
+                                <p class="plugin-info--simple">
+                                    版本：{{ plugin.version }}
+                                    <br>
+                                    作者：{{ plugin.author }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lucence-plugin--detail">
+                        <div class="plugin-detail--head">
+                            <p class="plugin-detail--title">
+                                {{ core.plugins.value[pluginStore.activeOn].display }}
+                                <span>
+                                    {{ core.plugins.value[pluginStore.activeOn].version }}
+                                </span>
+                            </p>
+                            <div class="plugin-detail--subject">
+                                <span>Plugin ID：{{ core.plugins.value[pluginStore.activeOn].name }}</span>
+                                <span>作者：{{ core.plugins.value[pluginStore.activeOn].author }}</span>
+                                <span>
+                                    <a :href="core.plugins.value[pluginStore.activeOn].github"
+                                   target="_blank">
+                                        <i class="fa-brands fa-github"></i>&nbsp;&nbsp;GitHub Page
+                                    </a>
+                                </span>
+                            </div>
+                            <div v-if="core.plugins.value[pluginStore.activeOn].name !== 'default_plugin'" 
+                                 class="action-container">
+                                <ul class="action-list">
+                                    <li class="action-item" title="禁用此插件">
+                                        <a class="action-label">禁用</a>
+                                        <div class="action-separator">
+                                            <div></div>
+                                        </div>
+                                        <div class="action-icon">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </div>
+                                    </li>
+                                    <li class="action-item" title="卸载此插件">
+                                        <a class="action-label">卸载</a>
+                                        <div class="action-separator">
+                                            <div></div>
+                                        </div>
+                                        <div class="action-icon">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="plugin-detail--body">
+                            <div class="detail-bar">
+                                <ul class="view-bar">
+                                    <li class="bar-item active" 
+                                        title="概览">
+                                        概览
+                                    </li>
+                                    <li class="bar-item"
+                                        title="配置">
+                                        配置
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="bar-item--detail">
+                                {{ core.plugins.value[pluginStore.activeOn].description }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 </template>
 
 <script lang="ts" setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { LucenceCore } from "@/core/LucenceCore";
 
+const emit = defineEmits<{
+    (event: "update:raw", value: string): void;
+    (event: "update:content", value: string): void;
+    (event: "update", value: string): void;
+}>();
 const props = defineProps({
     raw: {
         type: String,
@@ -113,9 +221,17 @@ const props = defineProps({
     },
 });
 let core: LucenceCore;
+const pluginStore = ref({
+    activeOn: 0,
+});
 onMounted(async () => {
     // 回显暴露的核心
-    core = new LucenceCore(props.raw).build();
+    core = new LucenceCore(props.raw).build((): void => {
+        console.log('call content change event...');
+        emit('update:raw', core.editor.getMarkdown());
+        emit('update:content', core.editor.getMarkdown());
+        emit('update', core.editor.getMarkdown());
+    });
 })
 </script>
 
