@@ -118,8 +118,8 @@
                             <div class="left-column">
                                 <img :alt="plugin.name" 
                                      :src="plugin.icon" 
-                                     width="80" 
-                                     height="80" />
+                                     width="46" 
+                                     height="46" />
                             </div>
                             <div class="right-column">
                                 <p class="plugin-info--title">
@@ -134,7 +134,64 @@
                         </div>
                     </div>
                     <div class="lucence-plugin--detail">
-                        
+                        <div class="plugin-detail--head">
+                            <p class="plugin-detail--title">
+                                {{ core.plugins.value[pluginStore.activeOn].display }}
+                                <span>
+                                    {{ core.plugins.value[pluginStore.activeOn].version }}
+                                </span>
+                            </p>
+                            <div class="plugin-detail--subject">
+                                <span>Plugin ID：{{ core.plugins.value[pluginStore.activeOn].name }}</span>
+                                <span>作者：{{ core.plugins.value[pluginStore.activeOn].author }}</span>
+                                <span>
+                                    <a :href="core.plugins.value[pluginStore.activeOn].github"
+                                   target="_blank">
+                                        <i class="fa-brands fa-github"></i>&nbsp;&nbsp;GitHub Page
+                                    </a>
+                                </span>
+                            </div>
+                            <div v-if="core.plugins.value[pluginStore.activeOn].name !== 'default_plugin'" 
+                                 class="action-container">
+                                <ul class="action-list">
+                                    <li class="action-item" title="禁用此插件">
+                                        <a class="action-label">禁用</a>
+                                        <div class="action-separator">
+                                            <div></div>
+                                        </div>
+                                        <div class="action-icon">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </div>
+                                    </li>
+                                    <li class="action-item" title="卸载此插件">
+                                        <a class="action-label">卸载</a>
+                                        <div class="action-separator">
+                                            <div></div>
+                                        </div>
+                                        <div class="action-icon">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="plugin-detail--body">
+                            <div class="detail-bar">
+                                <ul class="view-bar">
+                                    <li class="bar-item active" 
+                                        title="概览">
+                                        概览
+                                    </li>
+                                    <li class="bar-item"
+                                        title="配置">
+                                        配置
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="bar-item--detail">
+                                {{ core.plugins.value[pluginStore.activeOn].description }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
