@@ -10,7 +10,7 @@ import { SearchUtil } from "@/util/SearchUtil";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
-import type {PluginEvent, EventHandler, PluginList, PluginDetail} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, EventHandler, PluginList, PluginDetail, PluginHolder} from "@/extension/ArgumentPlugin";
 import {PluginEventHolder} from "@/core/BasicStructure";
 import type {AbstractPlugin} from "@/extension/BasePlugin";
 import {PluginResolver} from "@/core/PluginResolver";
@@ -606,7 +606,7 @@ export class LucenceCore {
         return this.instance;
     }
     // 插件列表
-    get plugins(): Ref<PluginDetail[]> {
+    get plugins(): Ref<PluginHolder[]> {
         return ref(this.resolver.pluginList.elems());
     }
 

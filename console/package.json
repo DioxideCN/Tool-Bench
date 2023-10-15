@@ -16,6 +16,7 @@
     "@halo-dev/console-shared": "^2.1.0",
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/editor-plugin-code-syntax-highlight": "^3.1.0",
+    "@vueuse/core": "^10.5.0",
     "echarts": "4.6.0",
     "highlight.js": "^11.8.0",
     "katex": "^0.16.8",

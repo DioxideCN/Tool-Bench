@@ -12,6 +12,9 @@ export type PluginCommand = {
     command: CommandFn,
 }
 
+/**
+ * 暴露给第三方开发者的插件信息定义类型
+ */
 export type PluginDetail = {
     icon: string,
     name: string,
@@ -21,8 +24,30 @@ export type PluginDetail = {
     description: string,
     github: string,
 }
-
-export type PluginList = Stack<PluginDetail>;
+/**
+ * 扩展槽的信息统计
+ */
+export type PluginHolder = {
+    key: string,
+    detail: PluginDetail,
+    register: {
+        toolbar: {
+            key: string,
+            name: string,
+            tooltip: string,
+        }[],
+        command: {
+            key: string,
+            name: string,
+            returnType: string,
+        }[],
+        event: {
+            key: string,
+            eventType: PluginEvent,
+        }[],
+    }
+}
+export type PluginList = Stack<PluginHolder>;
 
 export type PluginEvent = 
     // 文本事件

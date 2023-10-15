@@ -1,4 +1,4 @@
-import type {PluginCommand, PluginDetail, PluginList, PluginToolbar} from "@/extension/ArgumentPlugin";
+import type {PluginCommand, PluginDetail, PluginHolder, PluginList, PluginToolbar} from "@/extension/ArgumentPlugin";
 import type { AbstractPlugin } from "@/extension/BasePlugin";
 import {Stack} from "@/core/BasicStructure";
 import type {ToolbarItemOptions} from "@toast-ui/editor/types/ui";
@@ -8,7 +8,7 @@ import {TestPlugin} from "@/plugin/TestPlugin";
 
 export class PluginResolver {
     
-    private _pluginList: PluginList = new Stack<PluginDetail>();
+    private _pluginList: PluginList = new Stack<PluginHolder>();
     
     private readonly core: LucenceCore;
     
@@ -38,23 +38,20 @@ export class PluginResolver {
         if (!plugin.detail.github || !matchUrl(plugin.detail.github)) {
             throw Error("Plugin must provide a correct github url.");
         }
-        // TODO 是否已经存在相同name和display的插件，如果是则不load这个插件并throw异常
+        const holder: PluginHolder = {
+            key: plugin.detail.name,
+            detail: plugin.detail,
+            register: {
+                toolbar: [],
+                command: [],
+                event: [],
+            }
+        };
         
-        // 压栈
-        this._pluginList.push(plugin.detail);
+        // TODO 是否已经存在相同name和display的插件，如果是则不load这个插件并throw异常
         plugin.onEnable();
 
         const commands: PluginCommand[] | null = plugin.createCommands();
-        // 初始化插件的commands
-        if (commands) {
-            commands.forEach((cmd: PluginCommand): void => {
-                this.core.editor.addCommand(
-                    'markdown',
-                    cmd.name,
-                    cmd.command,
-                )
-            });
-        }
         // 初始化插件的toolbar
         const toolbar: PluginToolbar | null = plugin.createToolbar();
         if (toolbar) {
@@ -63,9 +60,32 @@ export class PluginResolver {
                 this.core.editor.insertToolbarItem({
                     groupIndex: 0,
                     itemIndex: i,
-                }, items[i])
+                }, items[i]);
+                holder.register.toolbar.push({
+                    key: `${plugin.detail.name}.tool.${i + 1}`,
+                    name: `${items[i].name}`,
+                    tooltip: `${items[i].tooltip}`,
+                });
             }
         }
+        // 初始化插件的commands
+        if (commands) {
+            for (let i = 0; i < commands.length; i++) {
+                this.core.editor.addCommand(
+                    'markdown',
+                    commands[i].name,
+                    commands[i].command,
+                )
+                holder.register.command.push({
+                    key: `${plugin.detail.name}.command.${i + 1}`,
+                    name: `${commands[i].name}`,
+                    returnType: `boolean`,
+                });
+            }
+        }
+
+        // 压栈
+        this._pluginList.push(holder);
     }
     
     // 卸载Plugin

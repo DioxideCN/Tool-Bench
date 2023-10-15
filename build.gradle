@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform('run.halo.tools.platform:plugin:2.9.0-SNAPSHOT')
+    implementation platform('run.halo.tools.platform:plugin:2.10.0-SNAPSHOT')
     implementation 'com.vladsch.flexmark:flexmark-all:0.64.8'
     implementation 'com.maxmind.geoip2:geoip2:4.0.1'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.7'
@@ -38,6 +38,10 @@ node {
 tasks.register('pnpmInstall', NpxTask) {
     command = "pnpm@7"
     args = ["install"]
+}
+
+configurations.runtimeClasspath {
+    exclude group: 'com.fasterxml.jackson.core'
 }
 
 tasks.register('buildFrontend', NpxTask) {

@@ -1,10 +1,11 @@
 package run.halo.toolbench.infra;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class GraphQLReader {
 
-    private final ReactiveSettingFetcher reactiveSettingFetcher;
+    private final ReactiveSettingFetcher settingFetcher;
 
     @Resource
     private ToolBenchPlugin PLUGIN;
@@ -61,8 +61,10 @@ public class GraphQLReader {
 
     @NotNull
     public Mono<String> executeQuery(String owner, String repo, BiFunction<String, String, String> queryBuilder) {
-        return this.reactiveSettingFetcher.get("basic")
+        return this.settingFetcher
+                .get("basic")
                 .map(setting -> setting.get("githubToken").asText("Github Token"))
+                .defaultIfEmpty("Github Token")
                 .flatMap(token -> WebClient.builder()
                         .baseUrl("https://api.github.com/graphql")
                         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -73,8 +75,7 @@ public class GraphQLReader {
                                 "query", queryBuilder.apply(owner, repo)
                         ))
                         .retrieve()
-                        .bodyToMono(String.class)
-                );
+                        .bodyToMono(String.class));
     }
 
 }
