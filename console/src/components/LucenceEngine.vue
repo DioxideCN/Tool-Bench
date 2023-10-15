@@ -295,16 +295,18 @@ const emit = defineEmits<{
     (event: "update:content", value: string): void;
     (event: "update",         value: string): void;
 }>();
-const props = withDefaults(
-    defineProps<{
-        raw?: string;
-        content: string;
-    }>(),
-    {
-        raw: "",
-        content: "",
-    }
-);
+const props = defineProps({
+    raw: {
+        type: String,
+        required: false,
+        default: "",
+    },
+    content: {
+        type: String,
+        required: false,
+        default: "",
+    },
+});
 let core: LucenceCore;
 const pluginStore = ref({
     activeOn: 0,
