@@ -22,7 +22,7 @@ public class GraphQLText {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String TOKEN = "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";
+    private static final String TOKEN = "demo";
 
     @Test
     public void queryUnitTest() {
