@@ -1,4 +1,6 @@
 import type {PluginEvent, PluginEventDefinition, PluginEventConverter} from "@/extension/ArgumentPlugin";
+import type {PluginResolver} from "@/core/PluginResolver";
+import type {AbstractPlugin} from "@/extension/BasePlugin";
 
 type EventStackObject = {
     [K in PluginEvent]: Stack<PluginEventConverter>
@@ -27,7 +29,10 @@ export class PluginEventHolder {
         "theme_change"    :   new Stack<PluginEventConverter>(),
     };
     
-    constructor() {
+    private readonly resolver: PluginResolver;
+    
+    constructor(resolver: PluginResolver) {
+        this.resolver = resolver;
     }
     
     // 註冊事件
@@ -38,6 +43,14 @@ export class PluginEventHolder {
             try {
                 this.eventStacks[definition.type]!
                     .push(this.converter(source, definition)!);
+                for (let i = 0; i < this.resolver.pluginList.length; i++) {
+                    if (this.resolver.pluginList[i].key === source) {
+                        this.resolver.pluginList[i].register.event.push({
+                            key: `${source}.event.${i}`,
+                            eventType: definition.type,
+                        });
+                    }
+                }
             } catch (e) {
                 throw e;
             }

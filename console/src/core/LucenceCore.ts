@@ -61,7 +61,7 @@ export class LucenceCore {
     private area: AreaType;
 
     // event holder
-    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
+    private readonly eventHolder: PluginEventHolder;
     
     // plugin resolver
     private readonly resolver: PluginResolver;
@@ -193,6 +193,7 @@ export class LucenceCore {
             lineBox: lineNumberDOM,
         }
         this.resolver = new PluginResolver(this);
+        this.eventHolder = new PluginEventHolder(this.resolver);
     }
 
     /**
@@ -244,11 +245,11 @@ export class LucenceCore {
         LucenceCore.renderMermaid();
         // 事件提交器
         this.eventHolder.register(
-        "_system_",
-        {
-            type: "content_change",
-            callback: emitter,
-        });
+            "default_extension",
+            {
+                type: "content_change",
+                callback: emitter,
+            });
         // 在构建成功后将instance实例暴露到全局
         return this;
     }
@@ -427,8 +428,8 @@ export class LucenceCore {
     /**
      * 执行一次查找，如果查找处于关闭状态那么清空结果和缓存，不进行查找。
      * 如果查找框内为空则从选择区域直接拷贝到查询框中作为条件进行查询。同
-     * 时根据 {@link this._cache.feature.search.condition} 和 
-     * {@link this._cache.feature.search.result} 将条件委派给 
+     * 时根据 {@link LucenceCore._cache.value.feature.search.condition} 和 
+     * {@link LucenceCore._cache.value.feature.search.result} 将条件委派给 
      * {@link SearchUtil#updateHighlight} 方法进行指定条件查找
      */
     public doSearch(): void {
@@ -507,7 +508,7 @@ export class LucenceCore {
         for (let index = 0; index < length; index++) {
             const selection = this.instance.getSelection();
             // @ts-ignore
-            const searchLength = this._cache.feature.search.condition.regular ? this._cache.feature.search.result.list[index][3] - this._cache.feature.search.result.list[index][1] : fixLength;
+            const searchLength = LucenceCore._cache.value.feature.search.condition.regular ? LucenceCore._cache.value.feature.search.result.list[index][3] - LucenceCore._cache.value.feature.search.result.list[index][1] : fixLength;
             const row: number[] = LucenceCore._cache.value.feature.search.result.list[index] as number[];
             let diffRow: number = row[0]; // 行间距
             let diffCol: number = row[1]; // 列间距
@@ -536,7 +537,7 @@ export class LucenceCore {
                         target = length - 1;
                     }
                     // @ts-ignore
-                    awaitArr = this._cache.feature.search.result.list[target];
+                    awaitArr = LucenceCore._cache.value.feature.search.result.list[target];
                     selectedIndex = target;
                     break;
                 } else {
@@ -550,7 +551,7 @@ export class LucenceCore {
                     }
                     selectedIndex = target;
                     // @ts-ignore
-                    awaitArr = this._cache.feature.search.result.list[target];
+                    awaitArr = LucenceCore._cache.value.feature.search.result.list[target];
                     break;
                 }
             }
@@ -562,7 +563,7 @@ export class LucenceCore {
                 selectedIndex = length - 1;
             }
             // @ts-ignore
-            awaitArr = this._cache.feature.search.result.list[selectedIndex];
+            awaitArr = LucenceCore._cache.value.feature.search.result.list[selectedIndex];
         }
         LucenceCore._cache.value.feature.search.result.hoverOn = selectedIndex + 1;
         this.highlightResult(awaitArr);
@@ -607,7 +608,7 @@ export class LucenceCore {
     }
     // 插件列表
     get plugins(): Ref<PluginHolder[]> {
-        return ref(this.resolver.pluginList.elems());
+        return ref(this.resolver.pluginList);
     }
 
     /* 静态方法区 */

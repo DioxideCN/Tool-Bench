@@ -291,8 +291,9 @@ import { onMounted, ref } from "vue";
 import { LucenceCore } from "@/core/LucenceCore";
 
 const emit = defineEmits<{
-    (event: "update:raw", value: string): void;
+    (event: "update:raw",     value: string): void;
     (event: "update:content", value: string): void;
+    (event: "update",         value: string): void;
 }>();
 const props = withDefaults(
     defineProps<{
@@ -325,9 +326,10 @@ function switchViewPlugin(index: number): void {
 }
 onMounted(async () => {
     // 回显暴露的核心
-    core = new LucenceCore(props.raw).build((): void => {
+    core = new LucenceCore(props.raw).build(function (): void {
         emit('update:raw', core.editor.getMarkdown());
         emit('update:content', core.editor.getHTML());
+        emit('update', core.editor.getHTML());
     });
 })
 </script>

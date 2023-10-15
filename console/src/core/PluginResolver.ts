@@ -8,7 +8,7 @@ import {TestPlugin} from "@/plugin/TestPlugin";
 
 export class PluginResolver {
     
-    private _pluginList: PluginList = new Stack<PluginHolder>();
+    private readonly _pluginList: PluginList = new Stack<PluginHolder>();
     
     private readonly core: LucenceCore;
     
@@ -114,8 +114,8 @@ export class PluginResolver {
     /**
      * 获取plugin列表
      */
-    public get pluginList() {
-        return this._pluginList;
+    public get pluginList(): PluginHolder[] {
+        return this._pluginList.elems();
     }
     
 }
