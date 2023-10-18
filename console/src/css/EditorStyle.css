@@ -602,6 +602,7 @@ pre.hljs,
 /* search engine */
 
 .amber-popup .amber-popup--search {
+    display: flex;
     position: absolute;
     right: 15px;
     top: 52px;
@@ -611,8 +612,7 @@ pre.hljs,
     -moz-box-shadow: var(--code-amber-shadow);
     border-radius: 4px;
     border: 1px solid var(--code-amber-search-border);
-    border-left: 3px solid var(--code-amber-search-border-hint);
-    padding: 4px;
+    padding-right: 4px;
 }
 .amber-popup .amber-popup--search .amber-popup--ahead {
     display: flex;
@@ -625,7 +625,8 @@ pre.hljs,
     border-radius: 3px;
     padding: 0 2px;
 }
-.amber-popup--ahead #amber-search--input {
+.amber-popup--ahead #amber-search--input,
+.amber-popup--ahead #amber-search--replacing {
     width: 200px;
     font-size: 14px;
     padding-left: 4px;
@@ -650,8 +651,9 @@ pre.hljs,
     border-radius: 3px;
 }
 .amber-popup--ahead .amber-popup--btn i:not(.disable):hover,
-.amber-popup--ahead .amber-popup--regular:hover,
-.amber-popup--ahead .amber-popup--capitalization:hover {
+.amber-popup--ahead .amber-popup--regular:not(.disable):hover,
+.amber-popup--ahead .amber-popup--capitalization:not(.disable):hover,
+.amber-popup--expander:not(.disable):hover {
     background: rgba(90, 93, 94, 0.5);
 }
 .amber-popup--ahead .amber-popup--result {
@@ -665,7 +667,7 @@ pre.hljs,
 }
 .amber-popup--btn { display: flex; }
 .amber-popup--ahead .amber-popup--btn i { position: relative; top: 1px; }
-.amber-popup--btn .disable { 
+.amber-popup--ahead .disable {
     color: var(--code-amber-btn-disable);
     cursor: default!important;
 }
@@ -685,6 +687,28 @@ pre.hljs,
     background: rgba(36, 137, 219, 0.51);
     border: 1px solid #2488db;
 }
+
+.amber-popup--replace { margin-top: 4px; }
+.amber-popup--ahead .codicon { font-size: 18px; }
+.amber-popup--expander {
+    width: 20px;
+    margin-right: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.amber-popup--width_expander {
+    cursor: e-resize;
+    background: var(--code-amber-search-border-hint);
+    margin-right: 1px;
+    width: 3px;
+    border-radius: 4px 0 0 4px;
+    transition: all .2s ease;
+}
+.amber-popup--width_expander:hover { background: rgb(0,120,212); }
+.amber-popup--padding { padding: 4px 0; }
 
 /* mermaid */
 
@@ -1033,7 +1057,7 @@ table.ext-list--child_list {
 }
 table.ext-list--child_list tr td,
 table.ext-list--child_list tr th {
-    width: 999px;
+    width: 33.3%;
     padding: 3px 16px 3px 4px;
 }
 table.ext-list--child_list thead tr,
@@ -1047,4 +1071,13 @@ table.ext-list--child_list tbody tr td code {
     border-radius: 3px;
     background: #8080802b;
     padding: 1px 4px;
+}
+
+/* unselectable */
+
+.unselectable {
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE/Edge */
 }

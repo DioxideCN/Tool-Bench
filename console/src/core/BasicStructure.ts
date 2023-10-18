@@ -48,6 +48,7 @@ export class PluginEventHolder {
                         this.resolver.pluginList[i].register.event.push({
                             key: `${source}.event.${i}`,
                             eventType: definition.type,
+                            desc: definition.desc,
                         });
                     }
                 }
@@ -56,7 +57,6 @@ export class PluginEventHolder {
             }
             return;
         }
-        // throw
         throw new Error("Illegal plugin event definition found.");
     }
     

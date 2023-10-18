@@ -11,6 +11,7 @@ specifiers:
   '@types/node': ^16.18.0
   '@vitejs/plugin-vue': ^3.1.2
   '@vitejs/plugin-vue-jsx': ^2.0.1
+  '@vscode/codicons': ^0.0.33
   '@vue/eslint-config-prettier': ^7.0.0
   '@vue/eslint-config-typescript': ^11.0.2
   '@vue/test-utils': ^2.2.0
@@ -38,6 +39,7 @@ dependencies:
   '@halo-dev/console-shared': 2.1.0_vue@3.2.41
   '@toast-ui/editor': registry.npmmirror.com/@toast-ui/editor/3.2.2
   '@toast-ui/editor-plugin-code-syntax-highlight': registry.npmmirror.com/@toast-ui/editor-plugin-code-syntax-highlight/3.1.0
+  '@vscode/codicons': registry.npmmirror.com/@vscode/codicons/0.0.33
   '@vueuse/core': registry.npmmirror.com/@vueuse/core/10.5.0_vue@3.2.41
   echarts: registry.npmmirror.com/echarts/4.6.0
   highlight.js: registry.npmmirror.com/highlight.js/11.8.0
@@ -3319,6 +3321,12 @@ packages:
     resolution: {integrity: sha512-v/ZHEj9xh82usl8LMR3GarzFY1IrbXJw5L4QfQhokjRV91q+SelFqxQWSep1ucXEZ22+dSTwLFkXeur25sPIbw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/web-bluetooth/-/web-bluetooth-0.0.18.tgz}
     name: '@types/web-bluetooth'
     version: 0.0.18
+    dev: false
+
+  registry.npmmirror.com/@vscode/codicons/0.0.33:
+    resolution: {integrity: sha512-VdgpnD75swH9hpXjd34VBgQ2w2quK63WljodlUcOoJDPKiV+rPjHrcUc2sjLCNKxhl6oKqmsZgwOWcDAY2GKKQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@vscode/codicons/-/codicons-0.0.33.tgz}
+    name: '@vscode/codicons'
+    version: 0.0.33
     dev: false
 
   registry.npmmirror.com/@vueuse/core/10.5.0_vue@3.2.41:

@@ -3,7 +3,7 @@
              class="lucence-wrapper">
         <div id="toast-editor"></div>
         <!-- Lucence BottomBar Module -->
-        <div class="toolbar-stat-panel">
+        <div class="toolbar-stat-panel unselectable">
             <div @click="core.toggle.plugin.open()" class="stat-head">
                 <i class="fa-solid fa-vector-square"></i>
             </div>
@@ -60,48 +60,81 @@
         <div id="amber-popup--group" 
              class="amber-popup">
             <div class="amber-popup--search" 
-                 :style="'display:' + (LucenceCore.cache.value.feature.search.enable ? 'block' : 'none')">
-                <div class="amber-popup--ahead">
-                    <div class="amber-popup--group">
-                        <input @input="core.doSearch()" 
-                               id="amber-search--input" 
-                               type="text" 
-                               placeholder="查找" />
-                        <i @click="core.toggle.capitalization()"
-                           :class="LucenceCore.cache.value.feature.search.condition.capitalization ? 'active' : ''" 
-                           class="fa-solid fa-a amber-popup--capitalization">
-                        </i>
-                        <i @click="core.toggle.regular()" 
-                           :class="LucenceCore.cache.value.feature.search.condition.regular ? 'active' : ''" 
-                           class="fa-solid fa-asterisk amber-popup--regular">
-                        </i>
+                 :style="'display:' + (LucenceCore.cache.value.feature.search.enable ? 'flex' : 'none')">
+                <div class="amber-popup--width_expander"></div>
+                <div class="amber-popup--expander amber-popup--padding"
+                     @click="core.toggle.replacing()">
+                    <i class="codicon" 
+                       :class="LucenceCore.cache.value.feature.search.replace ? 'codicon-chevron-down' : 'codicon-chevron-right'"></i>
+                </div>
+                <div class="amber-popup--padding">
+                    <div class="amber-popup--ahead">
+                        <div class="amber-popup--group">
+                            <input @input="core.doSearch()" 
+                                   id="amber-search--input" 
+                                   type="text" 
+                                   placeholder="查找" />
+                            <i @click="core.toggle.capitalization()"
+                               :class="LucenceCore.cache.value.feature.search.condition.capitalization ? 'active' : ''" 
+                               class="codicon codicon-case-sensitive amber-popup--capitalization"
+                               title="区分大小写">
+                            </i>
+                            <i @click="core.toggle.regular()" 
+                               :class="LucenceCore.cache.value.feature.search.condition.regular ? 'active' : ''" 
+                               class="codicon codicon-regex amber-popup--regular"
+                               title="使用正则表达式">
+                            </i>
+                        </div>
+                        <span class="amber-popup--result unselectable">
+                            {{ LucenceCore.cache.value.feature.search.result.total === 0 ? '无结果' : ('第 ' + LucenceCore.cache.value.feature.search.result.hoverOn + ' 项, 共 ' + LucenceCore.cache.value.feature.search.result.total) + ' 项' }}
+                        </span>
+                        <div class="amber-popup--btn">
+                            <i class="fa-solid fa-arrow-up amber-popup--last" 
+                               :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
+                               @click="core.locateSearchResultAt(false)">
+                            </i>
+                            <i class="fa-solid fa-arrow-down amber-popup--next" 
+                               :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
+                               @click="core.locateSearchResultAt(true)">
+                            </i>
+                            <i class="fa-solid fa-xmark amber-popup--close" 
+                               @click="core.toggle.search()">
+                            </i>
+                        </div>
                     </div>
-                    <span class="amber-popup--result">
-                        {{ LucenceCore.cache.value.feature.search.result.total === 0 ? '无结果' : ('第 ' + LucenceCore.cache.value.feature.search.result.hoverOn + ' 项, 共 ' + LucenceCore.cache.value.feature.search.result.total) + ' 项' }}
-                    </span>
-                    <div class="amber-popup--btn">
-                        <i class="fa-solid fa-arrow-up amber-popup--last" 
-                           :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
-                           @click="core.locateSearchResultAt(false)">
+                    <div class="amber-popup--ahead amber-popup--replace" 
+                         :style="'display:' + (LucenceCore.cache.value.feature.search.replace ? '' : 'none')">
+                        <div class="amber-popup--group">
+                            <input id="amber-search--replacing"
+                                   type="text"
+                                   placeholder="替换" />
+                            <i @click="core.toggle.capitalization()"
+                               class="codicon codicon-preserve-case amber-popup--capitalization"
+                               title="保留大小写">
+                            </i>
+                        </div>
+                        <!-- when there is no result we disable these btn -->
+                        <i @click="core.doReplacing(false)"
+                           class="codicon codicon-replace amber-popup--regular"
+                           :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''"
+                           title="替换">
                         </i>
-                        <i class="fa-solid fa-arrow-down amber-popup--next" 
-                           :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
-                           @click="core.locateSearchResultAt(true)">
-                        </i>
-                        <i class="fa-solid fa-xmark amber-popup--close" 
-                           @click="core.toggle.search()">
+                        <i @click="core.doReplacing(true)"
+                           class="codicon codicon-replace-all amber-popup--regular"
+                           :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''"
+                           title="全部替换">
                         </i>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Lucence Plugin Module -->
+        <!-- Lucence Extension Module -->
         <div id="lucence-plugin--store"
              @click="closeExtension()"
              v-if="LucenceCore.cache.value.plugin.enable">
             <div class="lucence-plugin--container"
                  @click.stop>
-                <div class="lucence-plugin--head">
+                <div class="lucence-plugin--head unselectable">
                     <div class="plugin-head--title">Extensions<span>扩展坞</span></div>
                     <div class="plugin-head--close">
                         <i class="fa-solid fa-xmark closable" 
@@ -265,12 +298,14 @@
                                                     <tr>
                                                         <th>扩展Key</th>
                                                         <th>监听类型</th>
+                                                        <th>描述</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr v-for="(item, index) in core.plugins.value[pluginStore.activeOn].register.event" :key="index">
                                                         <td><code>{{ item.key }}</code></td>
                                                         <td>{{ item.eventType }}</td>
+                                                        <td>{{ item.desc }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -337,6 +372,7 @@ onMounted(async () => {
 </script>
 
 <style>
+    @import "@vscode/codicons/dist/codicon.css";
     @import "@toast-ui/editor/dist/toastui-editor.css";
     @import "@fortawesome/fontawesome-free/css/all.min.css";
     @import "katex/dist/katex.min.css";

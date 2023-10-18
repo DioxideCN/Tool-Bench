@@ -44,6 +44,7 @@ export type PluginHolder = {
         event: {
             key: string,
             eventType: PluginEvent,
+            desc: string | undefined,
         }[],
     }
 }
@@ -76,6 +77,7 @@ export type PluginEvent =
 export type EventHandler = () => void;
 export type PluginEventDefinition = {
     type: PluginEvent,
+    desc: string | undefined,
     callback: EventHandler,
 };
 export type PluginEventConverter = {
