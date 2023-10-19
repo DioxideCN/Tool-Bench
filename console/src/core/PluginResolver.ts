@@ -47,12 +47,15 @@ export class PluginResolver {
                 event: [],
             }
         };
-        
-        // TODO 是否已经存在相同name和display的插件，如果是则不load这个插件并throw异常
-        plugin.onEnable();
-
+        // 是否已经存在相同name和display的插件，如果是则不load这个插件并throw异常中断程序
+        for (let elem of this._pluginList.elems()) {
+            if (elem.key === plugin.detail.name) {
+                throw Error(`Plugin ${plugin.detail.name} has been registered, you should change your plugin id.`);
+            }
+        }
+        // 插件的事件注册在BasicStructure#PluginEventHolder.register方法中进行实现
         const commands: PluginCommand[] | null = plugin.createCommands();
-        // 初始化插件的toolbar
+        // 注册toolbar
         const toolbar: PluginToolbar | null = plugin.createToolbar();
         if (toolbar) {
             const items: ToolbarItemOptions[] = toolbar.items;
@@ -68,7 +71,7 @@ export class PluginResolver {
                 });
             }
         }
-        // 初始化插件的commands
+        // 注册commands
         if (commands) {
             for (let i = 0; i < commands.length; i++) {
                 this.core.editor.addCommand(
@@ -83,9 +86,9 @@ export class PluginResolver {
                 });
             }
         }
-
-        // 压栈
+        // 将构建完成的插件压栈
         this._pluginList.push(holder);
+        plugin.onEnable();
     }
     
     // 卸载Plugin

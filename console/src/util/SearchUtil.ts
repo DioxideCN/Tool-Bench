@@ -91,8 +91,8 @@ export const SearchUtil = {
             const divs = Array.from(editorArea.children);
             if (searchCondition.regular) {
                 // 正则匹配 [[start_row, start_col, end_row, end_col]]
-                markList.forEach(range => {
-                    const [startRow, startCol, endRow, endCol] = range;
+                markList.forEach((range: number[]): void => {
+                    const [startRow, startCol, endRow, endCol]: number[] = range;
                     // 如果开始行和结束行是同一行
                     if (startRow === endRow) {
                         const div: Element = divs[startRow - 1];

@@ -91,14 +91,17 @@
                         <div class="amber-popup--btn">
                             <i class="fa-solid fa-arrow-up amber-popup--last" 
                                :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
-                               @click="core.locateSearchResultAt(false)">
+                               @click="core.locateSearchResultAt(false)"
+                               title="上一项">
                             </i>
                             <i class="fa-solid fa-arrow-down amber-popup--next" 
                                :class="LucenceCore.cache.value.feature.search.result.total === 0 ? 'disable' : ''" 
-                               @click="core.locateSearchResultAt(true)">
+                               @click="core.locateSearchResultAt(true)"
+                               title="下一项">
                             </i>
                             <i class="fa-solid fa-xmark amber-popup--close" 
-                               @click="core.toggle.search()">
+                               @click="core.toggle.search()"
+                               title="关闭搜索">
                             </i>
                         </div>
                     </div>
@@ -108,8 +111,9 @@
                             <input id="amber-search--replacing"
                                    type="text"
                                    placeholder="替换" />
-                            <i @click="core.toggle.capitalization()"
+                            <i @click="core.toggle.keepCap()"
                                class="codicon codicon-preserve-case amber-popup--capitalization"
+                               :class="LucenceCore.cache.value.feature.search.condition.keepCap ? 'active' : ''"
                                title="保留大小写">
                             </i>
                         </div>

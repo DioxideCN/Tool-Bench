@@ -12,6 +12,7 @@ export type CacheType = {
             condition: {
                 capitalization: boolean,      // 大小写敏感
                 regular: boolean,             // 正则查找
+                keepCap: boolean,             // 保留大小写
             },
             result: {
                 total: number,                // 结果总数

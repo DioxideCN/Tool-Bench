@@ -1,4 +1,4 @@
-import type {PluginEvent, PluginEventDefinition, PluginEventConverter} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, PluginEventDefinition, PluginEventConverter, PluginHolder} from "@/extension/ArgumentPlugin";
 import type {PluginResolver} from "@/core/PluginResolver";
 import type {AbstractPlugin} from "@/extension/BasePlugin";
 
@@ -43,15 +43,16 @@ export class PluginEventHolder {
             try {
                 this.eventStacks[definition.type]!
                     .push(this.converter(source, definition)!);
-                for (let i = 0; i < this.resolver.pluginList.length; i++) {
-                    if (this.resolver.pluginList[i].key === source) {
-                        this.resolver.pluginList[i].register.event.push({
-                            key: `${source}.event.${i}`,
+                this.resolver.pluginList.forEach((holder: PluginHolder) => {
+                    if (holder.key === source) {
+                        holder.register.event.push({
+                            key: `${source}.event.${holder.register.event.length}`,
                             eventType: definition.type,
                             desc: definition.desc,
                         });
+                        return;
                     }
-                }
+                })
             } catch (e) {
                 throw e;
             }

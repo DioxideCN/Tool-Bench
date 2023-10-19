@@ -32,6 +32,7 @@ export class LucenceCore {
                 condition: {
                     capitalization: false,   // 大小写敏感
                     regular: false,          // 正则查找
+                    keepCap: false,          // 保留大小写
                 },
                 result: {
                     total: 0,                // 结果总数
@@ -260,6 +261,16 @@ export class LucenceCore {
                 desc: "内容自动保存",
                 callback: emitter,
             });
+        this.eventHolder.register(
+            "default_extension",
+            {
+                type: "content_change",
+                desc: "动态更新搜索结果",
+                callback: () => {
+                    // 更新搜索内容
+                    this.doSearch();
+                },
+            });
         // 在构建成功后将instance实例暴露到全局
         return this;
     }
@@ -340,8 +351,6 @@ export class LucenceCore {
             this.area.lineBox.innerHTML = '';
             this.area.lineBox.appendChild(fragment);
         }
-        // 更新搜索内容
-        this.doSearch();
     }
 
     /**
@@ -433,6 +442,11 @@ export class LucenceCore {
                 !LucenceCore._cache.value.feature.search.condition.capitalization;
             this.doSearch();
         },
+        // 切换保留大小写
+        keepCap: ():void => {
+            LucenceCore._cache.value.feature.search.condition.keepCap = 
+                !LucenceCore._cache.value.feature.search.condition.keepCap;
+        },
         // 切换插件菜单页的显示
         plugin: {
             open: (): void => {
@@ -517,7 +531,7 @@ export class LucenceCore {
         const result = this.locateNearestOne(isDown);
         if (!result) return null;
         const { awaitArr, selectIndex } = result;
-        LucenceCore._cache.value.feature.search.result.hoverOn = selectIndex + 1;
+        LucenceCore._cache.value.feature.search.result.hoverOn = selectIndex;
         return this.highlightResult(awaitArr);
     }
 
@@ -612,8 +626,7 @@ export class LucenceCore {
             selectIndex: selectedIndex + 1,
         };
     }
-
-
+    
     /**
      * 更新Toolbar第一个位置的主题模式切换按钮
      * @param theme 主题色，一般通过{@link #getTheme()}方法来获取
