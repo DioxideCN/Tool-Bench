@@ -31,27 +31,8 @@ test {
     useJUnitPlatform()
 }
 
-node {
-    nodeProjectDir = file("${project.projectDir}/console")
-}
-
-tasks.register('pnpmInstall', NpxTask) {
-    command = "pnpm@7"
-    args = ["install"]
-}
-
 configurations.runtimeClasspath {
     exclude group: 'com.fasterxml.jackson.core'
-}
-
-tasks.register('buildFrontend', NpxTask) {
-    command = 'pnpm@7'
-    args = ['build']
-    dependsOn(pnpmInstall)
-}
-
-build {
-    tasks.getByName('compileJava').dependsOn('buildFrontend')
 }
 
 tasks.withType(JavaCompile).configureEach {
