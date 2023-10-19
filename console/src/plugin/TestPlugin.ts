@@ -3,7 +3,7 @@ import type {PluginDetail} from "@/extension/ArgumentPlugin";
 
 export class TestPlugin extends AbstractPlugin {
     public readonly detail: PluginDetail = {
-        icon: "https://avatars.githubusercontent.com/u/42887891?s=48&v=4",
+        icon: "https://dbf-publisher.gallerycdn.azure.cn/extensions/dbf-publisher/dbf/0.0.9/1603909271650/Microsoft.VisualStudio.Services.Icons.Default",
         name: "test_plugin",
         display: "测试插件",
         author: "DioxideCN",

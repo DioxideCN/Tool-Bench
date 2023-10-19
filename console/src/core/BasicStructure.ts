@@ -1,4 +1,6 @@
-import type {PluginEvent, PluginEventDefinition, PluginEventConverter} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, PluginEventDefinition, PluginEventConverter, PluginHolder} from "@/extension/ArgumentPlugin";
+import type {PluginResolver} from "@/core/PluginResolver";
+import type {AbstractPlugin} from "@/extension/BasePlugin";
 
 type EventStackObject = {
     [K in PluginEvent]: Stack<PluginEventConverter>
@@ -27,7 +29,10 @@ export class PluginEventHolder {
         "theme_change"    :   new Stack<PluginEventConverter>(),
     };
     
-    constructor() {
+    private readonly resolver: PluginResolver;
+    
+    constructor(resolver: PluginResolver) {
+        this.resolver = resolver;
     }
     
     // 註冊事件
@@ -38,12 +43,21 @@ export class PluginEventHolder {
             try {
                 this.eventStacks[definition.type]!
                     .push(this.converter(source, definition)!);
+                this.resolver.pluginList.forEach((holder: PluginHolder) => {
+                    if (holder.key === source) {
+                        holder.register.event.push({
+                            key: `${source}.event.${holder.register.event.length}`,
+                            eventType: definition.type,
+                            desc: definition.desc,
+                        });
+                        return;
+                    }
+                })
             } catch (e) {
                 throw e;
             }
             return;
         }
-        // throw
         throw new Error("Illegal plugin event definition found.");
     }
     

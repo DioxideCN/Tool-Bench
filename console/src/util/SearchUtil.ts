@@ -91,8 +91,8 @@ export const SearchUtil = {
             const divs = Array.from(editorArea.children);
             if (searchCondition.regular) {
                 // 正则匹配 [[start_row, start_col, end_row, end_col]]
-                markList.forEach(range => {
-                    const [startRow, startCol, endRow, endCol] = range;
+                markList.forEach((range: number[]): void => {
+                    const [startRow, startCol, endRow, endCol]: number[] = range;
                     // 如果开始行和结束行是同一行
                     if (startRow === endRow) {
                         const div: Element = divs[startRow - 1];
@@ -184,12 +184,12 @@ export const SearchUtil = {
     highlightSelection: (startRow: number, 
                          startIdx: number, 
                          endRow: number, 
-                         endIdx: number): void => {
-        const editorArea = document.getElementsByClassName('ProseMirror')[0]!;
+                         endIdx: number): Range | null => {
+        const editorArea: Element = document.getElementsByClassName('ProseMirror')[0]!;
         const divs: Element[] = Array.from(editorArea.children);
         const startRange: Range | null = createRangeFromOffsets(divs[startRow - 1], startIdx, startIdx);
         const endRange: Range | null = createRangeFromOffsets(divs[endRow - 1], endIdx, endIdx);
-        if (!startRange || !endRange) return;
+        if (!startRange || !endRange) return null;
         const range: Range = document.createRange();
         range.setStart(startRange.commonAncestorContainer, startRange.startOffset);
         range.setEnd(endRange.commonAncestorContainer, endRange.endOffset);
@@ -198,6 +198,7 @@ export const SearchUtil = {
             selection.removeAllRanges();
             selection.addRange(range);
         }
+        return selection ? selection.getRangeAt(0) : null;
     },
 }
 
@@ -212,12 +213,13 @@ function createRangeFromOffsets(div: Element,
         range.setEnd(div, 0);
         return range;
     }
-    let currentOffset: number = 0;
-    let startNode: any = null;
-    let endNode: any = null;
-    let startNodeOffset: number = 0;
-    let endNodeOffset: number = 0;
+    let currentOffset: number = 0, 
+        startNode: any = null, 
+        endNode: any = null, 
+        startNodeOffset: number = 0, 
+        endNodeOffset: number = 0;
     function traverse(node: any): true | undefined {
+        // DFS深搜DOM树
         if (node.nodeType === Node.TEXT_NODE) {
             const textLength = node.nodeValue.length;
             if (!startNode && currentOffset + textLength >= startOffset) {
@@ -231,14 +233,16 @@ function createRangeFromOffsets(div: Element,
                 return true;
             }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.previousSibling === null && startOffset === 0 && endOffset === 0) {
-                startNode = node.parentNode;
-                endNode = node.parentNode;
-                startNodeOffset = Array.from(node.parentNode.childNodes).indexOf(node);
-                endNodeOffset = startNodeOffset;
+            if (node.previousSibling === null && 
+                startOffset === 0 && 
+                endOffset === 0 && 
+                node.childNodes[0].nodeType === Node.TEXT_NODE) {
+                startNode = node.childNodes[0];
+                endNode = node.childNodes[0];
+                startNodeOffset = 0;
+                endNodeOffset = 0;
                 return true;
             }
-
             for (let child of node.childNodes) {
                 const done = traverse(child);
                 if (done) return true;

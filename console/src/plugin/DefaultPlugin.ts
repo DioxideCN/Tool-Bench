@@ -9,17 +9,17 @@ import type { PluginToolbar, PluginCommand, PluginDetail } from "@/extension/Arg
 export class DefaultPlugin extends AbstractPlugin {
 
     public readonly detail: PluginDetail = {
-        icon: "https://avatars.githubusercontent.com/u/42887891?s=48&v=4",
-        name: "default_plugin",
-        display: "默认插件",
-        author: "DioxideCN",
+        icon: "https://tyriar.gallerycdn.vsassets.io/extensions/tyriar/luna-paint/0.16.0/1661007177305/Microsoft.VisualStudio.Services.Icons.Default",
+        name: "default_extension",
+        display: "内置扩展",
+        author: "Dioxide.CN",
         version: "1.0.0",
-        description: "Lucence Editor 自带的默认插件，为编辑器提供基本的运行负载。",
+        description: "Lucence Editor自带的基础扩展，不可卸载或禁用，该扩展为Lucence Editor编辑器提供基本的运行负载。包括：Toolbar选项、事件触发器、基本指令扩展等。",
         github: "https://github.com/DioxideCN/Tool-Bench",
     };
     
     onEnable() {
-        console.log("Default plugin has been loaded successfully...");
+        console.log("Default extension has been loaded successfully...");
     }
 
     onDisable() {

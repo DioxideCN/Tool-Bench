@@ -55,10 +55,6 @@ public class HeadProcessor implements TemplateHeadProcessor {
                                 .script("/native/pinyin-pro.min.js")
                                 .script("/lib/DirectorySort.js")
                                 .build())))
-                .infer(whichTemplate(context, "page"))
-                .success(() -> {
-
-                })
                 .last();
     }
 

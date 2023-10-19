@@ -10,7 +10,7 @@ import { SearchUtil } from "@/util/SearchUtil";
 import type { AreaType, CacheType } from "@/core/TypeDefinition";
 import type { SelectionPos } from "@toast-ui/editor/types/editor";
 import type { Ref } from "vue";
-import type {PluginEvent, EventHandler, PluginList, PluginDetail} from "@/extension/ArgumentPlugin";
+import type {PluginEvent, EventHandler, PluginHolder} from "@/extension/ArgumentPlugin";
 import {PluginEventHolder} from "@/core/BasicStructure";
 import type {AbstractPlugin} from "@/extension/BasePlugin";
 import {PluginResolver} from "@/core/PluginResolver";
@@ -28,9 +28,11 @@ export class LucenceCore {
             autoSave: true,                  // 自动保存
             search: {
                 enable: false,               // 开启查找
+                replace: false,              // 开启替换
                 condition: {
                     capitalization: false,   // 大小写敏感
                     regular: false,          // 正则查找
+                    keepCap: false,          // 保留大小写
                 },
                 result: {
                     total: 0,                // 结果总数
@@ -61,7 +63,7 @@ export class LucenceCore {
     private area: AreaType;
 
     // event holder
-    private readonly eventHolder: PluginEventHolder = new PluginEventHolder();
+    private readonly eventHolder: PluginEventHolder;
     
     // plugin resolver
     private readonly resolver: PluginResolver;
@@ -76,8 +78,9 @@ export class LucenceCore {
         if (!editorOuter) {
             throw new Error('Cannot find element from id \'#toast-editor\'!');
         }
-        const lineNumberDOM = document.createElement('div');
-        lineNumberDOM.className = 'editor-line-number';
+        const lineNumberDOM: HTMLDivElement = document.createElement('div');
+        lineNumberDOM.classList.add('editor-line-number');
+        lineNumberDOM.classList.add('unselectable');
         lineNumberDOM.innerHTML = '<div class="line-item">1</div>';
         this.instance = new Editor({
             el: editorOuter,
@@ -87,6 +90,7 @@ export class LucenceCore {
             hideModeSwitch: true,
             previewHighlight: false,
             toolbarItems: [[]],
+            initialValue: rawContent,
             // 定义Markdown到HTML的渲染规则
             customHTMLRenderer: {
                 codeBlock(node: any): any {
@@ -179,7 +183,6 @@ export class LucenceCore {
                 },
             },
         });
-        this.instance.setMarkdown(rawContent);
         this.area = {
             // 预览区
             preview: document.getElementsByClassName('toastui-editor-md-preview')[0]! as HTMLElement,
@@ -193,6 +196,7 @@ export class LucenceCore {
             lineBox: lineNumberDOM,
         }
         this.resolver = new PluginResolver(this);
+        this.eventHolder = new PluginEventHolder(this.resolver);
     }
 
     /**
@@ -216,6 +220,13 @@ export class LucenceCore {
             if (event.ctrlKey && event.key === 'f') {
                 event.preventDefault();
                 LucenceCore._cache.value.feature.search.enable = true;
+                let value: string =
+                    (document.getElementById("amber-search--input") as HTMLInputElement).value!;
+                // 快速复制选中内容到查询框
+                if (value.length === 0) {
+                    value = window.getSelection()!.toString();
+                    (document.getElementById("amber-search--input") as HTMLInputElement).value = value;
+                }
                 that.doSearch();
             }
         });
@@ -244,11 +255,22 @@ export class LucenceCore {
         LucenceCore.renderMermaid();
         // 事件提交器
         this.eventHolder.register(
-        "_system_",
-        {
-            type: "content_change",
-            callback: emitter,
-        });
+            "default_extension",
+            {
+                type: "content_change",
+                desc: "内容自动保存",
+                callback: emitter,
+            });
+        this.eventHolder.register(
+            "default_extension",
+            {
+                type: "content_change",
+                desc: "动态更新搜索结果",
+                callback: () => {
+                    // 更新搜索内容
+                    this.doSearch();
+                },
+            });
         // 在构建成功后将instance实例暴露到全局
         return this;
     }
@@ -329,8 +351,6 @@ export class LucenceCore {
             this.area.lineBox.innerHTML = '';
             this.area.lineBox.appendChild(fragment);
         }
-        // 更新搜索内容
-        this.doSearch();
     }
 
     /**
@@ -400,6 +420,15 @@ export class LucenceCore {
             this.doSearch();
             // 通知搜索启用变更观察者
             this.eventHolder.callSeries("switch_search");
+            // 关闭替换框
+            if (!LucenceCore._cache.value.feature.search.enable) {
+                LucenceCore._cache.value.feature.search.replace = false;
+            }
+        },
+        // 切换是否打开搜索的替换模式
+        replacing: () => {
+            LucenceCore._cache.value.feature.search.replace = 
+                !LucenceCore._cache.value.feature.search.replace;
         },
         // 切换正则规则搜索
         regular: ():void => {
@@ -412,6 +441,11 @@ export class LucenceCore {
             LucenceCore._cache.value.feature.search.condition.capitalization = 
                 !LucenceCore._cache.value.feature.search.condition.capitalization;
             this.doSearch();
+        },
+        // 切换保留大小写
+        keepCap: ():void => {
+            LucenceCore._cache.value.feature.search.condition.keepCap = 
+                !LucenceCore._cache.value.feature.search.condition.keepCap;
         },
         // 切换插件菜单页的显示
         plugin: {
@@ -427,8 +461,8 @@ export class LucenceCore {
     /**
      * 执行一次查找，如果查找处于关闭状态那么清空结果和缓存，不进行查找。
      * 如果查找框内为空则从选择区域直接拷贝到查询框中作为条件进行查询。同
-     * 时根据 {@link this._cache.feature.search.condition} 和 
-     * {@link this._cache.feature.search.result} 将条件委派给 
+     * 时根据 {@link LucenceCore._cache.value.feature.search.condition} 和 
+     * {@link LucenceCore._cache.value.feature.search.result} 将条件委派给 
      * {@link SearchUtil#updateHighlight} 方法进行指定条件查找
      */
     public doSearch(): void {
@@ -441,13 +475,9 @@ export class LucenceCore {
             }
             return;
         }
-        let value: string = 
+        const value: string = 
             (document.getElementById("amber-search--input") as HTMLInputElement).value!;
-        // 快速复制选中内容到查询框
-        if (value.length === 0) {
-            value = window.getSelection()!.toString();
-            (document.getElementById("amber-search--input") as HTMLInputElement).value = value;
-        }
+        if (!value) return;
         if (!LucenceCore._cache.value.feature.search.condition.regular) {
             // 纯文本内容查询
             const { total, markList } = SearchUtil.text(
@@ -475,47 +505,79 @@ export class LucenceCore {
     }
 
     /**
-     * 将position位置的字段渲染为搜索结果的高亮区
-     * @param position 起始位置的一个4元素长度的数字型数组
+     * 对文本内容进行逐个替换和全局替换
+     * @param isGlobal 是否为全局替换
      */
-    public highlightResult(position: number[]): void {
-        if (LucenceCore._cache.value.feature.search.condition.regular) {
-            SearchUtil.highlightSelection(
-                position[0], 
-                position[1], 
-                position[2], 
-                position[3]);
-        } else {
-            SearchUtil.highlightSelection(
-                position[0], 
-                position[1], 
-                position[0], 
-                position[1] + (document.getElementById("amber-search--input") as HTMLInputElement).value!.length);
+    public doReplacing(isGlobal: boolean) {
+        if (!LucenceCore._cache.value.feature.search.replace ||
+            LucenceCore._cache.value.feature.search.result.total === 0) {
+            return;
+        }
+        const value: string =
+            (document.getElementById("amber-search--replacing") as HTMLInputElement).value!;
+        // 直接往下文定位到最近的结果进行全字替换
+        const range: Range | null = this.locateSearchResultAt(true);
+        if (range) {
+            range.deleteContents();
+            range.insertNode(document.createTextNode(value));
         }
     }
 
     /**
-     * 当向下或向上查找时调用该方法来定位到高亮的搜索内容上
+     * 当向下或向上查找时调用该方法来定位到高亮的搜索内容上。
      * @param isDown 是否是向下查找
      */
-    public locateSearchResultAt(isDown: boolean): void {
-        if (LucenceCore._cache.value.feature.search.result.total === 0) return;
-        const length = LucenceCore._cache.value.feature.search.result.list.length;
-        const fixLength = (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
-        let awaitArr: number[] = [];
-        let selectedIndex = isDown ? length - 1 : 0;
-        for (let index = 0; index < length; index++) {
-            const selection = this.instance.getSelection();
-            // @ts-ignore
-            const searchLength = this._cache.feature.search.condition.regular ? this._cache.feature.search.result.list[index][3] - this._cache.feature.search.result.list[index][1] : fixLength;
-            const row: number[] = LucenceCore._cache.value.feature.search.result.list[index] as number[];
-            let diffRow: number = row[0]; // 行间距
-            let diffCol: number = row[1]; // 列间距
-            // 如果是正则的向上查找并且row[0]和row[2]不相同
-            // 那么focusRow和focusCol应该通过window.getSelection()来重新定位起始位置
-            let rowToSubtract: number = LucenceCore._cache.value.feature.focus.row;
-            let colToSubtract: number = LucenceCore._cache.value.feature.focus.col;
-            if (!isDown && (row[0] !== row[2]) && LucenceCore._cache.value.feature.search.condition.regular) {
+    public locateSearchResultAt(isDown: boolean): Range | null {
+        const result = this.locateNearestOne(isDown);
+        if (!result) return null;
+        const { awaitArr, selectIndex } = result;
+        LucenceCore._cache.value.feature.search.result.hoverOn = selectIndex;
+        return this.highlightResult(awaitArr);
+    }
+
+    /**
+     * 将position位置的字段渲染为搜索结果的高亮区
+     * @param position 起始位置的一个4元素长度的数字型数组
+     */
+    public highlightResult(position: number[]): Range | null {
+        return SearchUtil.highlightSelection(
+            position[0],
+            position[1],
+            LucenceCore._cache.value.feature.search.condition.regular ?
+                position[2] : position[0],
+            LucenceCore._cache.value.feature.search.condition.regular ?
+                position[3] : position[1] + (document.getElementById("amber-search--input") as HTMLInputElement).value!.length);
+    }
+
+    /**
+     * 为查找和替换分理出一个统一的向下查找最近的结果的方法，
+     * 并将最近的一个结果的定位点以数组的形式暴露到外部
+     * @param isDown 是否为向下查找
+     */
+    private locateNearestOne(isDown: boolean): { awaitArr: number[], selectIndex: number, } | null {
+        if (LucenceCore._cache.value.feature.search.result.total === 0) return null;
+        const length: number =
+            LucenceCore._cache.value.feature.search.result.list.length;
+        const fixLength: number =
+            (document.getElementById("amber-search--input") as HTMLInputElement).value!.length;
+        let awaitArr: number[] = [], 
+            selectedIndex: number = isDown ? length - 1 : 0;
+        for (let index: number = 0; index < length; index++) {
+            const selection: SelectionPos = this.instance.getSelection(), 
+                  searchLength: number = 
+                      LucenceCore._cache.value.feature.search.condition.regular ? 
+                          (LucenceCore._cache.value.feature.search.result.list[index] as number[])[3] - (LucenceCore._cache.value.feature.search.result.list[index] as number[])[1] :
+                          fixLength, 
+                  row: number[] =
+                      LucenceCore._cache.value.feature.search.result.list[index] as number[];
+            let diffRow: number = row[0], diffCol: number = row[1]; // 行间距 列间距
+            // 正则回溯查找且row[0]和row[2]不相同，focusRow和focusCol需要重新定位起始位置
+            let rowToSubtract: number = 
+                    LucenceCore._cache.value.feature.focus.row,
+                colToSubtract: number = 
+                    LucenceCore._cache.value.feature.focus.col;
+            if (!isDown && (row[0] !== row[2]) &&
+                LucenceCore._cache.value.feature.search.condition.regular) {
                 rowToSubtract = (selection as [number[], number[]])[0][0];
                 colToSubtract = (selection as [number[], number[]])[0][1];
             }
@@ -523,34 +585,29 @@ export class LucenceCore {
             diffCol -= colToSubtract;
             // 将第一次遍历到的行差>=0的元素作为候选
             if (diffRow >= 0) {
-                // 如果行差=0选择第一个遍历到的列差>0的元素作为候选
+                // 如果行差为0选择第一个遍历到的列差>0的元素作为候选
                 if (diffRow === 0) {
-                    if ((!isDown && diffCol < 0 && Math.abs(diffCol) > searchLength) || (isDown && diffCol < 0 && Math.abs(diffCol) >= searchLength)) {
+                    if ((!isDown && diffCol < 0 && 
+                            Math.abs(diffCol) > searchLength) ||
+                        (isDown && diffCol < 0 && 
+                            Math.abs(diffCol) >= searchLength)) {
                         continue;
                     }
-                    let target = index;
-                    if (!isDown) {
-                        target--;
-                    }
-                    if (target < 0) {
-                        target = length - 1;
-                    }
-                    // @ts-ignore
-                    awaitArr = this._cache.feature.search.result.list[target];
+                    let target: number = index;
+                    if (!isDown) target--;
+                    if (target < 0) target = length - 1;
+                    awaitArr =
+                        LucenceCore._cache.value.feature.search.result.list[target] as number[];
                     selectedIndex = target;
                     break;
                 } else {
-                    // 候选必然是下一个，候选的前驱节点必然是上一个
-                    let target = index;
-                    if (!isDown) {
-                        target--;
-                    }
-                    if (target < 0) {
-                        target = length - 1;
-                    }
+                    // 候选必然是下一个，那么候选的前驱节点必然是上一个结果
+                    let target: number = index;
+                    if (!isDown) target--;
+                    if (target < 0) target = length - 1;
                     selectedIndex = target;
-                    // @ts-ignore
-                    awaitArr = this._cache.feature.search.result.list[target];
+                    awaitArr =
+                        LucenceCore._cache.value.feature.search.result.list[target] as number[];
                     break;
                 }
             }
@@ -561,13 +618,15 @@ export class LucenceCore {
             } else {
                 selectedIndex = length - 1;
             }
-            // @ts-ignore
-            awaitArr = this._cache.feature.search.result.list[selectedIndex];
+            awaitArr =
+                LucenceCore._cache.value.feature.search.result.list[selectedIndex] as number[];
         }
-        LucenceCore._cache.value.feature.search.result.hoverOn = selectedIndex + 1;
-        this.highlightResult(awaitArr);
+        return {
+            awaitArr: awaitArr,
+            selectIndex: selectedIndex + 1,
+        };
     }
-
+    
     /**
      * 更新Toolbar第一个位置的主题模式切换按钮
      * @param theme 主题色，一般通过{@link #getTheme()}方法来获取
@@ -587,12 +646,14 @@ export class LucenceCore {
      */
     public on(plugin: AbstractPlugin,
               event: PluginEvent,
+              desc: string,
               callback: EventHandler): void {
         // 事件类型和回调器压栈
         this.eventHolder.register(
             plugin.detail.name,
             {
                 type: event,
+                desc: desc,
                 callback: callback,
             });
     }
@@ -606,8 +667,8 @@ export class LucenceCore {
         return this.instance;
     }
     // 插件列表
-    get plugins(): Ref<PluginDetail[]> {
-        return ref(this.resolver.pluginList.elems());
+    get plugins(): Ref<PluginHolder[]> {
+        return ref(this.resolver.pluginList);
     }
 
     /* 静态方法区 */

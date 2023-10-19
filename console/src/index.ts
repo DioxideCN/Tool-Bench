@@ -1,19 +1,21 @@
-import { definePlugin } from "@halo-dev/console-shared";
-import { markRaw } from "vue";
+import {definePlugin, type EditorProvider} from "@halo-dev/console-shared";
+import {markRaw} from "vue";
 import LucenceEngine from "./components/LucenceEngine.vue";
+import logo from './assets/logo.svg'
 
 export default definePlugin({
-  extensionPoints: {
-    // @ts-ignore
-    "editor:create": () => {
-      return [
-        {
-          name: "lucenceengine",
-          displayName: "LucenceEngine",
-          component: markRaw(LucenceEngine),
-          rawType: "markdown",
+    extensionPoints: {
+        "editor:create": (): EditorProvider[] => {
+            return [
+                {
+                    name: "lucence-editor",
+                    displayName: "Lucence编辑器",
+                    // @ts-ignore
+                    component: markRaw(LucenceEngine),
+                    rawType: "markdown",
+                    logo: logo,
+                },
+            ];
         },
-      ];
     },
-  },
 });
